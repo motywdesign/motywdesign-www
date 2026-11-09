@@ -98,6 +98,7 @@ foot{display:block;margin-top:40px;color:var(--mut);font-size:12.5px}
 <input class="q" id="q" type="search" placeholder="Szukaj narzędzia…" aria-label="Szukaj narzędzia" autocomplete="off">
 
 <section data-g><h2>Oferty i klienci</h2><div class="g">
+<a class="t" href="/app/"><b>Panel klientów</b><span>Klienci, linki, hasła, ankiety i tablice w jednym miejscu</span></a>
 <a class="t" href="https://claude.ai/artifact/LgNvxTJ2i7EbazhfZqej1u" target="_blank" rel="noopener"><b>Generator ofert</b><span>Oferty dla klientów w stylu pracowni</span></a>
 <a class="t" href="https://claude.ai/artifact/C5TrhuhuQEXN2zxQ6k3pdV" target="_blank" rel="noopener"><b>Ankiety MotywDesign</b><span>Ankiety i formularze dla klientów</span></a>
 <a class="t" href="/tablica/"><b>Tablica MotywDesign</b><span>Wspólna tablica zespołu i klientów (wersja na domenie, z logowaniem)</span></a>
