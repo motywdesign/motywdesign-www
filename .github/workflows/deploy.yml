@@ -3,7 +3,7 @@ name: Wdrożenie na lh.pl
 on:
   push:
     branches: [main]
-    paths: ['public/**', '.github/workflows/deploy.yml']
+    paths: ['public/**', 'narzedzia/**', '.github/workflows/deploy.yml']
   workflow_dispatch:
 
 concurrency:
@@ -43,5 +43,26 @@ jobs:
           mirror -R --only-missing --parallel=2 --verbose public/fonts fonts
           mirror -R --only-missing --parallel=2 --verbose public/lib lib
           mirror -R --parallel=2 --verbose -x '^(img|fonts|lib)/' public .
+          bye
+          LFTP
+      - name: Wyślij narzędzia na subdomenę panel
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_DIR_NARZEDZIA: ${{ secrets.FTP_DIR_NARZEDZIA }}
+        run: |
+          if [ -z "$FTP_DIR_NARZEDZIA" ]; then echo "Brak sekretu FTP_DIR_NARZEDZIA, pomijam subdomenę."; exit 0; fi
+          lftp -u "$FTP_USER","$FTP_PASSWORD" "$FTP_HOST" <<LFTP
+          set ftp:passive-mode on
+          set ftp:ssl-allow yes
+          set ssl:verify-certificate no
+          set net:timeout 30
+          set net:max-retries 8
+          set net:reconnect-interval-base 5
+          set cmd:fail-exit yes
+          mkdir -p -f "$FTP_DIR_NARZEDZIA"
+          cd "$FTP_DIR_NARZEDZIA"
+          mirror -R --parallel=2 --verbose narzedzia .
           bye
           LFTP
