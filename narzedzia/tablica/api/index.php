@@ -132,7 +132,34 @@ function google_email(string $cred): ?string {
     return $e !== '' ? $e : null;
 }
 
+/* Jedno logowanie z panelem MotywDesign (rdzeń w katalogu wyżej, ten sam serwer i domena):
+   kto jest zalogowany w panelu, wchodzi do tablicy bez drugiego logowania; zespół z panelu ma też dostęp przez Google. */
+function panel_app() {
+    static $app = false;
+    if ($app !== false) return $app;
+    $root = dirname(__DIR__, 2);
+    $app = null;
+    if (is_file($root . '/dane/zainstalowano') && is_file($root . '/src/app.php')) {
+        try { $app = require $root . '/src/app.php'; } catch (\Throwable $e) { error_log('[tablica] panel: ' . $e->getMessage()); $app = null; }
+    }
+    return $app;
+}
+function panel_osoba(): ?array {
+    $t = $_COOKIE['md_sesja'] ?? '';
+    if (!is_string($t) || $t === '' || !($app = panel_app())) return null;
+    try { return $app->auth()->current($t); } catch (\Throwable $e) { return null; }
+}
+function panel_zna_email(string $email): bool {
+    if (!($app = panel_app())) return false;
+    try { return (bool)$app->db->val('SELECT 1 FROM osoby WHERE email = ? AND aktywna = 1', [$email]); } catch (\Throwable $e) { return false; }
+}
+
 start_session();
+if (!empty($_SESSION['z_panelu']) && !panel_osoba()) { $_SESSION = []; $_SESSION['csrf'] = bin2hex(random_bytes(16)); } // wylogowany albo wyłączony w panelu
+if (!is_auth() && ($o = panel_osoba())) {
+    session_regenerate_id(true);
+    $_SESSION['auth'] = true; $_SESSION['z_panelu'] = true; $_SESSION['email'] = strtolower((string)$o['email']); $_SESSION['t'] = time(); $_SESSION['csrf'] = bin2hex(random_bytes(16));
+}
 $a = $_GET['a'] ?? '';
 
 if ($a === 'session') {
@@ -153,7 +180,7 @@ if ($a === 'google') {
     $in = body_json();
     $cred = (string)($in['credential'] ?? '');
     $email = google_email($cred);
-    if ($email !== null && in_array($email, array_map('strtolower', CFG['allowed']), true)) {
+    if ($email !== null && (in_array($email, array_map('strtolower', CFG['allowed']), true) || panel_zna_email($email))) {
         unset($att[$ip]); priv_write('attempts', $att);
         session_regenerate_id(true);
         $_SESSION['auth'] = true; $_SESSION['email'] = $email; $_SESSION['t'] = time(); $_SESSION['csrf'] = bin2hex(random_bytes(16));
@@ -168,6 +195,11 @@ if ($a === 'google') {
 
 if ($a === 'logout') {
     require_auth_post();
+    // Wylogowanie z tablicy wylogowuje też z panelu, inaczej sesja panelu od razu wpuściłaby z powrotem.
+    if (($app = panel_app()) && !empty($_COOKIE['md_sesja'])) {
+        try { $app->auth()->logout((string)$_COOKIE['md_sesja']); } catch (\Throwable $e) {}
+        setcookie('md_sesja', '', ['expires' => 1, 'path' => '/', 'secure' => https_on(), 'httponly' => true, 'samesite' => 'Lax']);
+    }
     $_SESSION = [];
     session_destroy();
     out(['ok' => true]);
