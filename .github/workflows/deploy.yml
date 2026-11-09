@@ -13,14 +13,33 @@ concurrency:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+      - name: Zainstaluj lftp
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq lftp
       - name: Wyślij pliki na serwer
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_HOST }}
-          username: ${{ secrets.FTP_USER }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          protocol: ${{ secrets.FTP_PROTOCOL || 'ftps' }}
-          local-dir: ./public/
-          server-dir: ${{ secrets.FTP_DIR || './' }}
+        env:
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_DIR: ${{ secrets.FTP_DIR }}
+        run: |
+          DIR="${FTP_DIR:-.}"
+          lftp -u "$FTP_USER","$FTP_PASSWORD" "$FTP_HOST" <<LFTP
+          set ftp:passive-mode on
+          set ftp:ssl-allow yes
+          set ssl:verify-certificate no
+          set net:timeout 30
+          set net:max-retries 8
+          set net:reconnect-interval-base 5
+          set net:reconnect-interval-max 30
+          set cmd:fail-exit yes
+          mkdir -p -f "$DIR"
+          cd "$DIR"
+          mirror -R --only-missing --parallel=2 --verbose public/img img
+          mirror -R --only-missing --parallel=2 --verbose public/fonts fonts
+          mirror -R --only-missing --parallel=2 --verbose public/lib lib
+          mirror -R --parallel=2 --verbose -x '^(img|fonts|lib)/' public .
+          bye
+          LFTP
