@@ -1,3 +1,5 @@
+# NIE jest wgrywany na serwer. Katalog główny subdomeny panelu obsługuje rdzeń (repo motywdesign-panel,
+# public/.htaccess), który zawiera też regułę tablicy /_blob/. Zmiany reguł rób tam.
 Options -Indexes
 DirectoryIndex index.php index.html
 RewriteEngine On

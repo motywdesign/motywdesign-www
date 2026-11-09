@@ -63,7 +63,10 @@ jobs:
           set cmd:fail-exit yes
           mkdir -p -f "$FTP_DIR_NARZEDZIA"
           cd "$FTP_DIR_NARZEDZIA"
-          rm -f index.html
-          mirror -R --parallel=2 --verbose narzedzia .
+          # Katalog główny subdomeny (index.php, .htaccess) należy do rdzenia panelu z repo motywdesign-panel.
+          # Stąd idzie tylko tablica, dawna strona narzędzi jako narzedzia.php i robots.txt.
+          mirror -R --parallel=2 --verbose narzedzia/tablica tablica
+          put narzedzia/index.php -o narzedzia.php
+          put narzedzia/robots.txt -o robots.txt
           bye
           LFTP
