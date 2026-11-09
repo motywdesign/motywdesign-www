@@ -63,6 +63,7 @@ jobs:
           set cmd:fail-exit yes
           mkdir -p -f "$FTP_DIR_NARZEDZIA"
           cd "$FTP_DIR_NARZEDZIA"
+          rm -f index.html
           mirror -R --parallel=2 --verbose narzedzia .
           bye
           LFTP

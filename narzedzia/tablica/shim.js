@@ -1,6 +1,7 @@
 /* Zastępuje środowisko Claude (window.claude): baza dokumentów i zdjęcia trzymane na serwerze pracowni. */
 (function () {
   'use strict';
+  if (location.protocol === 'http:' && !/^(localhost|127\.)/.test(location.hostname)) { location.replace('https://' + location.host + location.pathname + location.search + location.hash); return; }
   var API = 'api/index.php';
   var csrf = '';
   var POLL_MS = 1500;

@@ -1,3 +1,63 @@
+<?php
+declare(strict_types=1);
+/* Strona startowa narzędzi: widoczna tylko po zalogowaniu kontem Google (ta sama sesja co Tablica). */
+ini_set('display_errors', '0');
+header('X-Robots-Tag: noindex, nofollow');
+header('Cache-Control: no-store');
+$https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+session_name('mdtab');
+session_set_cookie_params(['lifetime' => 0, 'path' => '/', 'secure' => $https, 'httponly' => true, 'samesite' => 'Strict']);
+ini_set('session.use_strict_mode', '1');
+session_start();
+$auth = !empty($_SESSION['auth']) && (time() - (int)($_SESSION['t'] ?? 0) <= 28800);
+$email = (string)($_SESSION['email'] ?? '');
+if ($auth) { $_SESSION['t'] = time(); }
+if (!$auth) {
+?>
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Narzędzia MotywDesign</title>
+<style>
+:root{--bg:#f5f5f7;--card:#fff;--ink:#1d1d1f;--mut:#6e6e73;--acc:#B4552D}
+@media (prefers-color-scheme:dark){:root{--bg:#0b0b0c;--card:#1a1a1c;--ink:#f2f2f4;--mut:#a1a1a6}}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--ink);font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Arial,sans-serif;padding:16px}
+.card{width:100%;max-width:380px;background:var(--card);border-radius:18px;padding:28px;box-shadow:0 8px 30px rgba(0,0,0,.12);display:flex;flex-direction:column;gap:14px}
+h1{margin:0 0 2px;font-size:22px;letter-spacing:-.02em}p{margin:0;color:var(--mut);font-size:14px}.err{color:#d70015;min-height:20px;font-size:14px}#g{min-height:44px}
+</style>
+</head>
+<body>
+<div class="card"><h1>Narzędzia MotywDesign</h1><p>Zaloguj się kontem Google, aby wejść.</p><div id="g"></div><div class="err" role="alert" id="err"></div></div>
+<script>
+(function(){
+if(location.protocol==='http:'&&!/^(localhost|127\.)/.test(location.hostname)){location.replace('https://'+location.host+location.pathname+location.search);return;}
+var A='tablica/api/index.php',err=document.getElementById('err'),csrf='';
+function jf(a,body){var o={credentials:'same-origin'};if(body){o.method='POST';o.headers={'Content-Type':'application/json','X-CSRF':csrf};o.body=JSON.stringify(body);}
+ return fetch(A+'?a='+a,o).then(function(r){return r.json().then(function(j){if(!r.ok||j.error)throw new Error(j.error||'Błąd');return j;});});}
+jf('session').then(function(s){
+  csrf=s.csrf;
+  var sc=document.createElement('script');sc.src='https://accounts.google.com/gsi/client';sc.async=true;
+  sc.onload=function(){try{
+    google.accounts.id.initialize({client_id:s.gid,ux_mode:'popup',auto_select:false,callback:function(r){
+      err.textContent='';
+      jf('google',{credential:r.credential}).then(function(){location.reload();}).catch(function(e){err.textContent=e.message;});
+    }});
+    google.accounts.id.renderButton(document.getElementById('g'),{theme:'outline',size:'large',text:'signin_with',locale:'pl',width:324});
+  }catch(e){err.textContent='Nie udało się wczytać logowania Google.';}};
+  sc.onerror=function(){err.textContent='Nie udało się połączyć z Google.';};
+  document.head.appendChild(sc);
+}).catch(function(e){err.textContent=e.message;});
+})();
+</script>
+</body>
+</html>
+<?php
+exit;
+}
+?>
 <!doctype html>
 <html lang="pl">
 <head>
@@ -16,6 +76,7 @@ header{display:flex;align-items:center;gap:12px;margin-bottom:28px}
 header i{width:12px;height:12px;background:var(--acc);display:block;flex:none}
 h1{font-size:26px;line-height:1.15;margin:0;letter-spacing:-.02em}
 header p{margin:0 0 0 auto;color:var(--mut);font-size:13px}
+#out{border:0;background:none;color:var(--blue);font:inherit;cursor:pointer;padding:0 0 0 8px}#out:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 .q{display:block;width:100%;max-width:420px;height:42px;border:0;border-radius:999px;background:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.06),0 0 0 1px var(--line);padding:0 18px;font:inherit;color:inherit;margin-bottom:30px}
 .q:focus{outline:2px solid var(--blue)}
 section{margin-bottom:34px}
@@ -33,7 +94,7 @@ foot{display:block;margin-top:40px;color:var(--mut);font-size:12.5px}
 </head>
 <body>
 <div class="wrap">
-<header><i aria-hidden="true"></i><h1>Narzędzia MotywDesign</h1><p>panel.motywdesign.pl</p></header>
+<header><i aria-hidden="true"></i><h1>Narzędzia MotywDesign</h1><p><span id="who"></span> <button id="out" type="button">Wyloguj</button></p></header>
 <input class="q" id="q" type="search" placeholder="Szukaj narzędzia…" aria-label="Szukaj narzędzia" autocomplete="off">
 
 <section data-g><h2>Oferty i klienci</h2><div class="g">
@@ -83,6 +144,16 @@ q.addEventListener('input',function(){
     s.style.display=n?'':'none';shown+=n;
   });
   none.style.display=shown?'none':'block';
+});
+})();
+</script>
+<script>
+(function(){
+document.getElementById('who').textContent=<?= json_encode($email, JSON_UNESCAPED_UNICODE) ?>;
+document.getElementById('out').addEventListener('click',function(){
+  fetch('tablica/api/index.php?a=session',{credentials:'same-origin'}).then(function(r){return r.json()}).then(function(s){
+    return fetch('tablica/api/index.php?a=logout',{method:'POST',credentials:'same-origin',headers:{'X-CSRF':s.csrf}});
+  }).catch(function(){}).then(function(){location.reload();});
 });
 })();
 </script>

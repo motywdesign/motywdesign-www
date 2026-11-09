@@ -284,6 +284,8 @@ ErrorDocument 404 /404.html
 Options -Indexes
 <IfModule mod_rewrite.c>
 RewriteEngine On
+RewriteCond %{HTTP:X-Forwarded-Proto} =http
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^projekty/[^/]+/?$ /projekty/index.html [L]

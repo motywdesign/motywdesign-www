@@ -97,6 +97,32 @@ function imgx_load(): array {
     return is_array($j) ? $j : [];
 }
 
+$CFG = require __DIR__ . '/config.php';
+define('CFG', $CFG);
+function http_get(string $url): ?string {
+    if (function_exists('curl_init')) {
+        $c = curl_init($url);
+        curl_setopt_array($c, [CURLOPT_RETURNTRANSFER => true, CURLOPT_TIMEOUT => 10, CURLOPT_CONNECTTIMEOUT => 6, CURLOPT_FOLLOWLOCATION => false]);
+        $r = curl_exec($c); $code = (int)curl_getinfo($c, CURLINFO_HTTP_CODE); curl_close($c);
+        return ($r !== false && $code === 200) ? (string)$r : null;
+    }
+    $r = @file_get_contents($url, false, stream_context_create(['http' => ['timeout' => 10]]));
+    return $r === false ? null : (string)$r;
+}
+/* zwraca adres e-mail zweryfikowanego konta albo null */
+function google_email(string $cred): ?string {
+    if (strlen($cred) < 100 || strlen($cred) > 4000 || !preg_match('/^[A-Za-z0-9_\-\.]+$/', $cred)) return null;
+    $raw = http_get(CFG['tokeninfo'] . '?id_token=' . rawurlencode($cred));
+    $j = $raw ? json_decode($raw, true) : null;
+    if (!is_array($j)) return null;
+    if (($j['aud'] ?? '') !== CFG['client_id']) return null;
+    if (!in_array($j['iss'] ?? '', ['accounts.google.com', 'https://accounts.google.com'], true)) return null;
+    if ((int)($j['exp'] ?? 0) < time()) return null;
+    if (!in_array((string)($j['email_verified'] ?? ''), ['true', '1'], true)) return null;
+    $e = strtolower((string)($j['email'] ?? ''));
+    return $e !== '' ? $e : null;
+}
+
 start_session();
 $a = $_GET['a'] ?? '';
 
@@ -114,49 +140,34 @@ if ($a === 'data') {
 }
 
 if ($a === 'session') {
-    out(['auth' => is_auth(), 'csrf' => (string)$_SESSION['csrf'], 'setup' => priv_read('auth') === null]);
+    out(['auth' => is_auth(), 'csrf' => (string)$_SESSION['csrf'], 'gid' => CFG['client_id'], 'email' => $_SESSION['email'] ?? null]);
 }
 
-if ($a === 'setup') {
+/* logowanie kontem Google: token z "Zaloguj przez Google" sprawdzamy u Google, wpuszczamy tylko adresy z config.php */
+if ($a === 'google') {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') fail('Metoda niedozwolona', 405);
-    if (priv_read('auth') !== null) fail('Hasło jest już ustawione.', 409);
     $h = $_SERVER['HTTP_X_CSRF'] ?? '';
     if (!hash_equals((string)$_SESSION['csrf'], (string)$h)) fail('Odśwież stronę i spróbuj ponownie.', 403);
-    $in = body_json();
-    $seed = json_decode((string)@file_get_contents($ROOT . '/seed/setup.json'), true);
-    $want = is_array($seed) ? (string)($seed['sha256'] ?? '') : '';
-    $code = trim((string)($in['code'] ?? ''));
-    $pw = (string)($in['password'] ?? '');
-    if ($want === '' || !hash_equals($want, hash('sha256', $code))) { usleep(800000); fail('Nieprawidłowy kod startowy.', 403); }
-    if (mb_strlen($pw) < 12) fail('Hasło musi mieć co najmniej 12 znaków.');
-    priv_write('auth', ['hash' => password_hash($pw, PASSWORD_DEFAULT), 'created' => time()]);
-    session_regenerate_id(true);
-    $_SESSION['auth'] = true; $_SESSION['t'] = time(); $_SESSION['csrf'] = bin2hex(random_bytes(16));
-    out(['ok' => true]);
-}
-
-if ($a === 'login') {
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') fail('Metoda niedozwolona', 405);
     $ip = client_ip();
     $att = priv_read('attempts') ?? [];
     $now = time();
     foreach ($att as $k => $v) { if (($v['until'] ?? 0) < $now && ($v['last'] ?? 0) < $now - 3600) unset($att[$k]); }
     $rec = $att[$ip] ?? ['n' => 0, 'until' => 0, 'last' => 0];
     if (($rec['until'] ?? 0) > $now) { fail('Za dużo prób. Spróbuj za ' . (int)ceil(($rec['until'] - $now) / 60) . ' min.', 429); }
-    $auth = priv_read('auth');
     $in = body_json();
-    $pw = (string)($in['password'] ?? '');
-    if ($auth && password_verify($pw, (string)$auth['hash'])) {
+    $cred = (string)($in['credential'] ?? '');
+    $email = google_email($cred);
+    if ($email !== null && in_array($email, array_map('strtolower', CFG['allowed']), true)) {
         unset($att[$ip]); priv_write('attempts', $att);
         session_regenerate_id(true);
-        $_SESSION['auth'] = true; $_SESSION['t'] = time(); $_SESSION['csrf'] = bin2hex(random_bytes(16));
-        out(['ok' => true]);
+        $_SESSION['auth'] = true; $_SESSION['email'] = $email; $_SESSION['t'] = time(); $_SESSION['csrf'] = bin2hex(random_bytes(16));
+        out(['ok' => true, 'email' => $email]);
     }
     $rec['n'] = (int)$rec['n'] + 1; $rec['last'] = $now;
     if ($rec['n'] >= MAX_FAILS) { $rec['until'] = $now + LOCK_SECS; $rec['n'] = 0; }
     $att[$ip] = $rec; priv_write('attempts', $att);
-    usleep(800000);
-    fail('Nieprawidłowe hasło.', 401);
+    if ($email === null) fail('Nie udało się zweryfikować logowania Google. Spróbuj ponownie.', 401);
+    fail('To konto Google (' . $email . ') nie ma dostępu.', 403);
 }
 
 if ($a === 'logout') {

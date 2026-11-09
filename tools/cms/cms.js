@@ -1,6 +1,7 @@
 /* Łącznik strony z panelem: udaje bazę, wgrywanie plików i konto właściciela, a dane bierze z /api/. */
 (function () {
   'use strict';
+  if (location.protocol === 'http:' && !/^(localhost|127\.|\[::1\])/.test(location.hostname)) { location.replace('https://' + location.host + location.pathname + location.search + location.hash); return; }
   var API = '/api/';
   var st = { auth: false, csrf: '', setup: false };
   var cache = null, loading = null, subs = { projects: [], site: [], textEdits: [] };
@@ -130,29 +131,27 @@
   function login() {
     css();
     var d = document.createElement('div'); d.id = 'md-login';
-    var setup = st.setup;
-    d.innerHTML = '<form autocomplete="on" novalidate><h1>' + (setup ? 'Ustaw hasło do panelu' : 'Panel MotywDesign') + '</h1>' +
-      '<p>' + (setup ? 'To pierwsze uruchomienie. Wpisz kod startowy od Claude i wymyśl hasło (co najmniej 12 znaków).' : 'Zaloguj się, żeby edytować stronę.') + '</p>' +
-      (setup ? '<label for="mdc">Kod startowy</label><input id="mdc" type="text" autocomplete="off" autocapitalize="off">' : '') +
-      '<label for="mdp">' + (setup ? 'Nowe hasło' : 'Hasło') + '</label><input id="mdp" type="password" autocomplete="' + (setup ? 'new-password' : 'current-password') + '">' +
-      (setup ? '<label for="mdp2">Powtórz hasło</label><input id="mdp2" type="password" autocomplete="new-password">' : '') +
-      '<div class="er" role="alert"></div><button type="submit">' + (setup ? 'Ustaw hasło' : 'Zaloguj') + '</button><p><a href="/">Wróć na stronę</a></p></form>';
+    d.innerHTML = '<form onsubmit="return false"><h1>Panel MotywDesign</h1><p>Zaloguj się kontem Google, żeby edytować stronę.</p>' +
+      '<div id="md-gbtn" style="min-height:44px"></div><div class="er" role="alert"></div><p><a href="/">Wróć na stronę</a></p></form>';
     document.body.appendChild(d);
     document.documentElement.style.overflow = 'hidden';
-    var f = d.querySelector('form'), er = d.querySelector('.er'), btn = d.querySelector('button');
-    setTimeout(function () { var i = d.querySelector('input'); if (i) i.focus(); }, 50);
-    f.addEventListener('submit', function (e) {
-      e.preventDefault(); er.textContent = '';
-      var pw = d.querySelector('#mdp').value, body;
-      if (setup) {
-        if (pw !== d.querySelector('#mdp2').value) { er.textContent = 'Hasła nie są takie same.'; return; }
-        body = { code: d.querySelector('#mdc').value, password: pw };
-      } else body = { password: pw };
-      btn.disabled = true;
-      jf(API + '?a=' + (setup ? 'setup' : 'login'), { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF': st.csrf }, body: JSON.stringify(body) })
+    var er = d.querySelector('.er');
+    function onCred(resp) {
+      er.textContent = '';
+      jf(API + '?a=google', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF': st.csrf }, body: JSON.stringify({ credential: resp.credential }) })
         .then(function () { location.reload(); })
-        .catch(function (x) { btn.disabled = false; er.textContent = x.message || 'Nie udało się zalogować.'; });
-    });
+        .catch(function (x) { er.textContent = x.message || 'Nie udało się zalogować.'; });
+    }
+    var sc = document.createElement('script');
+    sc.src = 'https://accounts.google.com/gsi/client'; sc.async = true;
+    sc.onload = function () {
+      try {
+        google.accounts.id.initialize({ client_id: st.gid, callback: onCred, auto_select: false, ux_mode: 'popup' });
+        google.accounts.id.renderButton(document.getElementById('md-gbtn'), { theme: 'outline', size: 'large', text: 'signin_with', locale: 'pl', width: 320 });
+      } catch (e) { er.textContent = 'Nie udało się wczytać logowania Google.'; }
+    };
+    sc.onerror = function () { er.textContent = 'Nie udało się połączyć z Google. Sprawdź internet lub blokadę skryptów.'; };
+    document.head.appendChild(sc);
   }
   function logoutBtn() {
     css();

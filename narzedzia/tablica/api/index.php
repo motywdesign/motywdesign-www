@@ -163,7 +163,7 @@ if ($a === 'google') {
     if ($rec['n'] >= MAX_FAILS) { $rec['until'] = $now + LOCK_SECS; $rec['n'] = 0; }
     $att[$ip] = $rec; priv_write('attempts', $att);
     if ($email === null) fail('Nie udało się zweryfikować logowania Google. Spróbuj ponownie.', 401);
-    fail('To konto Google (' . $email . ') nie ma dostępu do tablicy.', 403);
+    fail('To konto Google (' . $email . ') nie ma dostępu.', 403);
 }
 
 if ($a === 'logout') {
