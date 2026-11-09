@@ -64,8 +64,8 @@ jobs:
           mkdir -p -f "$FTP_DIR_NARZEDZIA"
           cd "$FTP_DIR_NARZEDZIA"
           # Katalog główny subdomeny (index.php, .htaccess) należy do rdzenia panelu z repo motywdesign-panel.
-          # Stąd idzie tylko tablica, dawna strona narzędzi jako narzedzia.php i robots.txt.
-          mirror -R --parallel=2 --verbose narzedzia/tablica tablica
+          # Stąd idzie tylko dawna strona narzędzi jako narzedzia.php i robots.txt.
+          # Tablica (tablica/) wgrywa się z repo motywdesign/tablica-motywdesign.
           put narzedzia/index.php -o narzedzia.php
           put narzedzia/robots.txt -o robots.txt
           bye

@@ -8,4 +8,4 @@ Wymagane sekrety repozytorium (Settings, Secrets and variables, Actions): `FTP_H
 
 ## Subdomena panelu
 
-Na subdomenę panelu (`FTP_DIR_NARZEDZIA`) to repo wysyła tylko `narzedzia/tablica` (jako `tablica/`), `narzedzia/index.php` (jako `narzedzia.php`) i `robots.txt`. Katalog główny subdomeny (`index.php`, `.htaccess`) należy do rdzenia panelu z repo `motywdesign-panel`.
+Na subdomenę panelu (`FTP_DIR_NARZEDZIA`) to repo wysyła tylko `narzedzia/index.php` (jako `narzedzia.php`) i `robots.txt`. Tablica (`tablica/`) ma własne repo `motywdesign/tablica-motywdesign` i wgrywa się stamtąd automatycznie. Katalog główny subdomeny (`index.php`, `.htaccess`) należy do rdzenia panelu z repo `motywdesign-panel`.
