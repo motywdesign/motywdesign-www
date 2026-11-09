@@ -17,37 +17,37 @@
     });
   }
 
-  /* ---- ekran logowania ---- */
+  /* ---- ekran logowania (konto Google) ---- */
   function loginScreen(info) {
     return new Promise(function (resolve) {
-      var setup = !!info.setup;
       var box = document.createElement('div');
       box.id = 'md-login';
       box.innerHTML =
         '<style>#md-login{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;background:#f5f5f7;color:#1d1d1f;font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Arial,sans-serif;padding:16px}' +
-        '@media (prefers-color-scheme:dark){#md-login{background:#0b0b0c;color:#f2f2f4}#md-login form{background:#1a1a1c!important}#md-login input{background:#0b0b0c!important;color:#f2f2f4!important;border-color:rgba(255,255,255,.18)!important}}' +
-        '#md-login form{width:100%;max-width:380px;background:#fff;border-radius:18px;padding:28px;box-shadow:0 8px 30px rgba(0,0,0,.12);display:flex;flex-direction:column;gap:12px}' +
-        '#md-login h1{margin:0 0 4px;font-size:22px;letter-spacing:-.02em}#md-login p{margin:0;color:#6e6e73;font-size:14px}' +
-        '#md-login input{height:44px;border:1px solid rgba(0,0,0,.18);border-radius:10px;padding:0 14px;font:inherit;background:#fff;color:inherit}' +
-        '#md-login input:focus{outline:2px solid #0071e3;outline-offset:1px}' +
-        '#md-login button{height:44px;border:0;border-radius:10px;background:#B4552D;color:#fff;font:inherit;font-weight:600;cursor:pointer}' +
-        '#md-login button:disabled{opacity:.6}#md-login .err{color:#d70015;min-height:20px;font-size:14px}</style>' +
-        '<form><h1>Tablica MotywDesign</h1><p>' + (setup ? 'Pierwsze uruchomienie: ustaw hasło (min. 12 znaków).' : 'Zaloguj się, aby wejść na tablicę.') + '</p>' +
-        (setup ? '<input name="code" type="password" placeholder="Kod startowy" autocomplete="off" required>' : '') +
-        '<input name="password" type="password" placeholder="' + (setup ? 'Nowe hasło' : 'Hasło') + '" autocomplete="' + (setup ? 'new-password' : 'current-password') + '" required>' +
-        '<div class="err" role="alert"></div><button type="submit">' + (setup ? 'Ustaw hasło' : 'Wejdź') + '</button></form>';
+        '@media (prefers-color-scheme:dark){#md-login{background:#0b0b0c;color:#f2f2f4}#md-login .card{background:#1a1a1c!important}}' +
+        '#md-login .card{width:100%;max-width:380px;background:#fff;border-radius:18px;padding:28px;box-shadow:0 8px 30px rgba(0,0,0,.12);display:flex;flex-direction:column;gap:14px}' +
+        '#md-login h1{margin:0 0 2px;font-size:22px;letter-spacing:-.02em}#md-login p{margin:0;color:#6e6e73;font-size:14px}' +
+        '#md-login .btn{min-height:44px;display:flex;align-items:center}#md-login .err{color:#d70015;min-height:20px;font-size:14px}</style>' +
+        '<div class="card"><h1>Tablica MotywDesign</h1><p>Zaloguj się kontem Google, aby wejść na tablicę.</p>' +
+        '<div class="btn" id="md-gbtn"></div><div class="err" role="alert"></div></div>';
       document.body.appendChild(box);
-      var f = box.querySelector('form'), err = box.querySelector('.err'), btn = box.querySelector('button');
-      var first = f.querySelector('input'); if (first) first.focus();
-      f.addEventListener('submit', function (ev) {
-        ev.preventDefault(); err.textContent = ''; btn.disabled = true;
-        var body = { password: f.password.value };
-        if (setup) body.code = f.code.value;
-        jfetch(setup ? 'setup' : 'login', body).then(function () {
-          return jfetch('session');
-        }).then(function (s) { csrf = s.csrf; box.remove(); resolve(); })
-          .catch(function (e) { err.textContent = e.message; btn.disabled = false; });
-      });
+      var err = box.querySelector('.err');
+      function onCred(resp) {
+        err.textContent = '';
+        jfetch('google', { credential: resp.credential }).then(function () { return jfetch('session'); })
+          .then(function (s) { csrf = s.csrf; box.remove(); resolve(); })
+          .catch(function (e) { err.textContent = e.message; });
+      }
+      var sc = document.createElement('script');
+      sc.src = 'https://accounts.google.com/gsi/client'; sc.async = true;
+      sc.onload = function () {
+        try {
+          google.accounts.id.initialize({ client_id: info.gid, callback: onCred, auto_select: false, ux_mode: 'popup' });
+          google.accounts.id.renderButton(document.getElementById('md-gbtn'), { theme: 'outline', size: 'large', text: 'signin_with', locale: 'pl', width: 324 });
+        } catch (e) { err.textContent = 'Nie udało się wczytać logowania Google.'; }
+      };
+      sc.onerror = function () { err.textContent = 'Nie udało się połączyć z Google. Sprawdź internet lub blokadę skryptów.'; };
+      document.head.appendChild(sc);
     });
   }
 
