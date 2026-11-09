@@ -1,6 +1,20 @@
-DirectoryIndex index.html
+DirectoryIndex index.html index.php
 ErrorDocument 404 /404.html
 Options -Indexes
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^projekty/[^/]+/?$ /projekty/index.html [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^panel/.+$ /panel/index.html [L]
+</IfModule>
+<IfModule mod_headers.c>
+Header always set X-Content-Type-Options "nosniff"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+Header always set X-Frame-Options "SAMEORIGIN"
+</IfModule>
 <IfModule mod_deflate.c>
 AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml text/xml
 </IfModule>
@@ -13,7 +27,7 @@ ExpiresByType image/svg+xml "access plus 1 month"
 ExpiresByType text/html "access plus 0 seconds"
 </IfModule>
 <IfModule mod_headers.c>
-<FilesMatch "\.(webp|jpg|jpeg|png)$">
+<FilesMatch "\.(webp|jpg|jpeg|png|mp4)$">
 Header set Cache-Control "public, max-age=31536000, immutable"
 </FilesMatch>
 </IfModule>

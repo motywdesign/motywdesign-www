@@ -1,3 +1,7 @@
 User-agent: *
 Allow: /
+Disallow: /panel/
+Disallow: /api/
+Disallow: /data/
+Disallow: /seed/
 Sitemap: https://motywdesign.pl/sitemap.xml

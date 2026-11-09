@@ -73,7 +73,7 @@ src = src[:i] + 'var SNAP = ' + snap + src[j:]
 # zdjęcia z folderu /img/
 imgx = json.dumps({k: v for k, v in assets.items() if k in used}, separators=(',', ':'))
 src = sub1("function blob(id) { return id ? (IMC.mem[id] || '/_blob/' + id) : ''; }",
-           "var IMGX = " + imgx + ";\n  function blob(id) { return id ? '/img/' + id + '.' + (IMGX[id] || 'webp') : ''; }", src)
+           "var IMGX = " + imgx + ";\n  function blob(id) { return id ? '/img/' + id + '.' + (IMGX[id] || (window.__IMGX && window.__IMGX[id]) || 'webp') : ''; }", src)
 
 # bez pamięci podręcznej danych w przeglądarce (strona statyczna ma jedną prawdę)
 src = sub1("    if (/^#panel/.test(location.hash)) return;\n    try {\n      var raw = localStorage.getItem(DC.key);",
@@ -94,6 +94,8 @@ STATIC_ROUTER = r"""
     if (h === 'uslugi') return '/uslugi/';
     if (h === 'prywatnosc' || h === 'polityka-prywatnosci' || h === 'cookies') return '/prywatnosc/';
     if (h.indexOf('projekt-') === 0) return '/projekty/' + h.slice(8) + '/';
+    if (h === 'panel') return '/panel/';
+    if (h.indexOf('panel-') === 0) return '/panel/#' + h;
     return null;
   }
   function pathToHash(p) {
@@ -105,6 +107,7 @@ STATIC_ROUTER = r"""
     if (p === '/kontakt') return 'kontakt';
     if (p === '/uslugi') return 'uslugi';
     if (p === '/prywatnosc') return 'prywatnosc';
+    if (p === '/panel' || p.indexOf('/panel/') === 0) return 'panel';
     if (p.indexOf('/projekty/') === 0) return 'projekt-' + decodeURIComponent(p.slice(10));
     return '';
   }
@@ -132,8 +135,8 @@ STATIC_ROUTER = r"""
     var p = u.pathname; if (p.charAt(p.length - 1) !== '/' && p.indexOf('.') < 0) p += '/';
     if (!(p === '/' || pathToHash(p) !== '')) return;
     e.preventDefault();
-    if (p === location.pathname) { toTop(); window.dispatchEvent(new Event('hashchange')); return; }
-    history.pushState(null, '', p); go(false); window.dispatchEvent(new Event('hashchange'));
+    if (p === location.pathname) { if (/^#panel/.test(u.hash)) { location.hash = u.hash; return; } toTop(); window.dispatchEvent(new Event('hashchange')); return; }
+    history.pushState(null, '', p + u.hash); go(false); window.dispatchEvent(new Event('hashchange'));
   });
   window.addEventListener('popstate', function () { go(false); window.dispatchEvent(new Event('hashchange')); });
   new MutationObserver(function () { fixLinks(); }).observe(document.documentElement, { childList: true, subtree: true });
@@ -165,14 +168,16 @@ for p in projects:
 
 src = sub1("  window.addEventListener('hashchange', function () { go(false); });",
            STATIC_ROUTER.replace('__PAGES__', json.dumps(pages, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')) +
-           "\n  window.addEventListener('hashchange', function () { if (hashToPath(location.hash) && hashToPath(location.hash) !== '/') { history.replaceState(null, '', hashToPath(location.hash)); go(false); } });", src)
+           "\n  window.addEventListener('hashchange', function () { if (/^\\/panel/.test(location.pathname)) { go(false); return; } if (hashToPath(location.hash) && hashToPath(location.hash) !== '/') { history.replaceState(null, '', hashToPath(location.hash)); go(false); } });", src)
 src = sub1("var h = (location.hash || '').replace(/^#/, '');\n    if (ALIAS[h] != null) h = ALIAS[h];\n    if (!h) return { v: 'home' };",
-           "var h = pathToHash(location.pathname);\n    if (!h) return { v: 'home' };", src)
+           "var h = pathToHash(location.pathname);\n    if (h === 'panel') { var hh = (location.hash || '').replace(/^#/, ''); if (/^panel/.test(hh)) h = hh; }\n    if (!h) return { v: 'home' };", src)
 src = sub1("  var ALIAS = {", "  var SITE = '" + SITE_URL + "';\n  var ALIAS = {", src)
 src = sub1("    var first = !curKey; curKey = key; curRoute = r;",
            "    var first = !curKey; curKey = key; curRoute = r; setSeo(r);", src)
 
 src = sub1("    document.title = (t || '') + 'MotywDesign';", "    if (r.v !== 'panel') setSeo(r); else document.title = 'Panel · MotywDesign';", src)
+
+src = sub1("    if (!S.canEdit || !S.db || S.dbState !== 'ready' || S.fromCache) return '';\n    var dirty = snapDirty();", "    return '';\n    var dirty = snapDirty();", src)
 
 # panel i funkcje edycji nie istnieją na stronie statycznej: edycja wymaga artefaktu
 # (S.canEdit zostaje false, bo brak window.claude)
@@ -184,7 +189,7 @@ def esc(s):
 STRIP = [r'<title>.*?</title>\s*', r'<link rel="canonical"[^>]*>\s*', r'<meta name="claude:viewport-fit-sides"[^>]*>\s*',
          r'<meta name="description"[^>]*>\s*', r'<meta property="og:[^"]*"[^>]*>\s*', r'<meta name="twitter:[^"]*"[^>]*>\s*',
          r'<link rel="icon"[^>]*>\s*']
-body_src = src.replace('src="lib/', 'src="/lib/').replace('url("fonts/', 'url("/fonts/')
+body_src = src.replace('<script src="lib/gsap.min.js">', '<script src="/cms.js"></script>\n<script src="lib/gsap.min.js">', 1).replace('src="lib/', 'src="/lib/').replace('url("fonts/', 'url("/fonts/')
 for pat in STRIP:
     body_src = re.sub(pat, '', body_src, flags=re.S)
 assert '</head>' in body_src
@@ -246,6 +251,27 @@ for sub in ('lib', 'fonts'):
 for f in ('favicon.svg', 'og.png', 'llms.txt'):
     shutil.copy2(ROOT / 'static' / f, PUB / f)
 
+# ---------- panel: strona logowania, API, dane startowe ----------
+pages['panel'] = {'t': 'Panel | ' + NAME, 'd': 'Panel administracyjny.'}
+(PUB / 'panel').mkdir(exist_ok=True)
+pdoc = body_src.replace('</head>', head_block('panel', SITE_URL + '/panel/').replace('<meta name="description"', '<meta name="robots" content="noindex,nofollow">\n<meta name="description"', 1) + '</head>', 1)
+(PUB / 'panel' / 'index.html').write_text(pdoc, encoding='utf-8')
+
+shutil.copytree(ROOT / 'cms' / 'api', PUB / 'api')
+shutil.copy2(ROOT / 'cms' / 'cms.js', PUB / 'cms.js')
+(PUB / 'api' / '.htaccess').write_text('<FilesMatch "^(?!index\\.php$)">\nRequire all denied\n</FilesMatch>\n')
+
+import hashlib, secrets
+code_file = ROOT / 'setup_code.txt'
+if not code_file.exists():
+    code_file.write_text(secrets.token_urlsafe(15))
+setup_code = code_file.read_text().strip()
+(PUB / 'seed').mkdir()
+seed = {'projects': {p['id']: {k: v for k, v in p.items() if k != 'id'} for p in projects}, 'site': {'content': site}, 'textEdits': {}}
+(PUB / 'seed' / 'content.json').write_text(json.dumps(seed, ensure_ascii=False, separators=(',', ':')), encoding='utf-8')
+(PUB / 'seed' / 'setup.json').write_text(json.dumps({'sha256': hashlib.sha256(setup_code.encode()).hexdigest()}))
+(PUB / 'seed' / '.htaccess').write_text('Require all denied\nDeny from all\n')
+
 # sitemap + robots + .htaccess
 today = os.environ.get('LASTMOD', '')
 sm = ['<?xml version="1.0" encoding="UTF-8"?>', '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
@@ -253,10 +279,24 @@ for rel, key in urls:
     sm.append('<url><loc>%s</loc>%s</url>' % (SITE_URL + ('/' + rel + '/' if rel else '/'), ('<lastmod>%s</lastmod>' % today) if today else ''))
 sm.append('</urlset>')
 (PUB / 'sitemap.xml').write_text('\n'.join(sm) + '\n')
-(PUB / 'robots.txt').write_text('User-agent: *\nAllow: /\nSitemap: %s/sitemap.xml\n' % SITE_URL)
-(PUB / '.htaccess').write_text("""DirectoryIndex index.html
+(PUB / 'robots.txt').write_text('User-agent: *\nAllow: /\nDisallow: /panel/\nDisallow: /api/\nDisallow: /data/\nDisallow: /seed/\nSitemap: %s/sitemap.xml\n' % SITE_URL)
+(PUB / '.htaccess').write_text("""DirectoryIndex index.html index.php
 ErrorDocument 404 /404.html
 Options -Indexes
+<IfModule mod_rewrite.c>
+RewriteEngine On
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^projekty/[^/]+/?$ /projekty/index.html [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^panel/.+$ /panel/index.html [L]
+</IfModule>
+<IfModule mod_headers.c>
+Header always set X-Content-Type-Options "nosniff"
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+Header always set X-Frame-Options "SAMEORIGIN"
+</IfModule>
 <IfModule mod_deflate.c>
 AddOutputFilterByType DEFLATE text/html text/css application/javascript application/json image/svg+xml text/xml
 </IfModule>
@@ -269,7 +309,7 @@ ExpiresByType image/svg+xml "access plus 1 month"
 ExpiresByType text/html "access plus 0 seconds"
 </IfModule>
 <IfModule mod_headers.c>
-<FilesMatch "\\.(webp|jpg|jpeg|png)$">
+<FilesMatch "\\.(webp|jpg|jpeg|png|mp4)$">
 Header set Cache-Control "public, max-age=31536000, immutable"
 </FilesMatch>
 </IfModule>
