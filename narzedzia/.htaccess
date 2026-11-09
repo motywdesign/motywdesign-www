@@ -1,5 +1,7 @@
 Options -Indexes
 DirectoryIndex index.html
+RewriteEngine On
+RewriteRule ^_blob/([0-9a-f]{32})$ tablica/api/index.php?a=blob&id=$1 [L,QSA]
 <IfModule mod_headers.c>
 Header always set X-Robots-Tag "noindex, nofollow"
 </IfModule>
