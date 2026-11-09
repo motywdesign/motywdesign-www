@@ -37,6 +37,8 @@ jobs:
           set cmd:fail-exit yes
           mkdir -p -f "$DIR"
           cd "$DIR"
+          # pliki, które wypadły z projektu (lista ręczna, nic poza nią nie jest kasowane)
+          rm -f api/.htaccess
           mirror -R --only-missing --parallel=2 --verbose public/img img
           mirror -R --only-missing --parallel=2 --verbose public/fonts fonts
           mirror -R --only-missing --parallel=2 --verbose public/lib lib
