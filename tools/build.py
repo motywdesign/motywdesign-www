@@ -259,7 +259,6 @@ pdoc = body_src.replace('</head>', head_block('panel', SITE_URL + '/panel/').rep
 
 shutil.copytree(ROOT / 'cms' / 'api', PUB / 'api')
 shutil.copy2(ROOT / 'cms' / 'cms.js', PUB / 'cms.js')
-(PUB / 'api' / '.htaccess').write_text('<FilesMatch "^(?!index\\.php$)">\nRequire all denied\n</FilesMatch>\n')
 
 import hashlib, secrets
 code_file = ROOT / 'setup_code.txt'
