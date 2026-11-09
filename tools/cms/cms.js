@@ -138,6 +138,7 @@
       (setup ? '<label for="mdp2">Powtórz hasło</label><input id="mdp2" type="password" autocomplete="new-password">' : '') +
       '<div class="er" role="alert"></div><button type="submit">' + (setup ? 'Ustaw hasło' : 'Zaloguj') + '</button><p><a href="/">Wróć na stronę</a></p></form>';
     document.body.appendChild(d);
+    document.documentElement.style.overflow = 'hidden';
     var f = d.querySelector('form'), er = d.querySelector('.er'), btn = d.querySelector('button');
     setTimeout(function () { var i = d.querySelector('input'); if (i) i.focus(); }, 50);
     f.addEventListener('submit', function (e) {
@@ -163,8 +164,16 @@
   }
   function init() {
     session().then(function (s) {
+      if (s.auth) logoutBtn();
+      /* strona jest jedną aplikacją: wejście do panelu może nastąpić też przez kliknięcie linku, więc pilnujemy stale */
+      setInterval(function () {
+        var el = document.getElementById('md-login');
+        if (onPanel() && !st.auth) { if (!el) login(); }
+        else if (el) { el.remove(); document.documentElement.style.overflow = ''; }
+        var ob = document.getElementById('md-out');
+        if (ob) ob.style.display = onPanel() ? '' : 'none';
+      }, 150);
       if (onPanel() && !s.auth) login();
-      else if (s.auth) logoutBtn();
     });
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
