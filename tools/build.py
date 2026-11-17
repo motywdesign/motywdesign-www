@@ -253,9 +253,8 @@ for f in ('favicon.svg', 'og.png', 'llms.txt'):
 
 # ---------- panel: strona logowania, API, dane startowe ----------
 pages['panel'] = {'t': 'Panel | ' + NAME, 'd': 'Panel administracyjny.'}
-(PUB / 'panel').mkdir(exist_ok=True)
-pdoc = body_src.replace('</head>', head_block('panel', SITE_URL + '/panel/').replace('<meta name="description"', '<meta name="robots" content="noindex,nofollow">\n<meta name="description"', 1) + '</head>', 1)
-(PUB / 'panel' / 'index.html').write_text(pdoc, encoding='utf-8')
+# Panel to osobna aplikacja (tools/panel), nie wycinek SPA: kopiujemy ją w całości.
+shutil.copytree(ROOT / 'panel', PUB / 'panel')
 
 shutil.copytree(ROOT / 'cms' / 'api', PUB / 'api')
 shutil.copy2(ROOT / 'cms' / 'cms.js', PUB / 'cms.js')

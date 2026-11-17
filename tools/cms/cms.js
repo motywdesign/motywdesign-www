@@ -175,5 +175,15 @@
       if (onPanel() && !s.auth) login();
     });
   }
+  /* stary adres projektu po zmianie nazwy: przekierowanie na nowy (mapa z panelu) */
+  (function redirectOld() {
+    var m = location.pathname.match(/^\/projekty\/([^\/]+)\/?$/);
+    if (!m) return;
+    var old = decodeURIComponent(m[1]);
+    jf(API + '?a=redirects').then(function (r) {
+      var to = r && r.redirects && r.redirects[old];
+      if (to && to !== old) location.replace('/projekty/' + encodeURIComponent(to) + '/' + location.search + location.hash);
+    }).catch(function () {});
+  })();
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
