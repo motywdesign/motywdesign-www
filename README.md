@@ -14,6 +14,8 @@ Na subdomenę panelu (`FTP_DIR_NARZEDZIA`) to repo wysyła tylko `narzedzia/inde
 
 Panel to osobna aplikacja w `tools/panel/` (kopiowana do `public/panel/` przez `tools/build.py`). Zmiany zapisują się same do wersji roboczej (`data/draft.json`), a przycisk „Opublikuj” przenosi ją na stronę (`data/content.json`). Historia wersji i kosz (30 dni) są w panelu, kopie leżą w `data/history/`.
 
+Efekt tekstu „Animacja przy wejściu” (scroll w dół: wersja normalna, scroll w górę: odwrócona) dopisuje do zbudowanych stron skrypt `tools/patch_wfx.py`. Kod strony powstaje z zewnętrznego źródła, więc po każdym `tools/build.py` trzeba go uruchomić ponownie (jest idempotentny).
+
 Po zmianie adresu projektu stary adres przekierowuje na nowy (skrypt `cms.js`). Statyczne pliki SEO (tytuły i opisy w `<head>`, `sitemap.xml`, `llms.txt`) odświeżają się dopiero po ponownym zbudowaniu strony `tools/build.py`.
 
 ### Generator opisów (Claude)

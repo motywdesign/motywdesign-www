@@ -3957,6 +3957,8 @@ body.is-panel .foot { display: none; }
   /* Efekty słów (zakładka Podglądy w panelu albo tryb „Efekty słów” w menu podręcznym):
      podgląd zdjęcia, zamiana słowa po najechaniu, podświetlenie, animacja przy wejściu. Słowo z efektem ma tło: ciemne na jasnym, jaśniejsze na ciemnym. */
   var HVC = null, HVL = [], HV_IO = null;
+  var WFX_DIR = 'down', WFX_LY = window.pageYOffset || 0;
+  addEventListener('scroll', function () { var y = window.pageYOffset || 0; if (y !== WFX_LY) { WFX_DIR = y > WFX_LY ? 'down' : 'up'; WFX_LY = y; } }, { passive: true });
   var WFX_EFF = [['preview', 'Podgląd zdjęcia'], ['swap', 'Zamiana słowa'], ['highlight', 'Podświetlenie'], ['enter', 'Animacja przy wejściu']];
   var WFX_ANIM = [['glow', 'Rozświetlenie'], ['blur', 'Wyostrzenie z rozmycia'], ['cascade', 'Kaskada liter']];
   function hvCard() { if (HVC) return HVC; HVC = document.createElement('div'); HVC.className = 'hvc'; HVC.setAttribute('aria-hidden', 'true'); HVC.innerHTML = '<img alt=""><b></b><span></span>'; document.body.appendChild(HVC); return HVC; }
@@ -3979,19 +3981,20 @@ body.is-panel .foot { display: none; }
       var sp = document.createElement('span'); sp.className = 'hpv fx-' + h.eff; sp.tabIndex = 0; sp.dataset.hp = i; mid.parentNode.replaceChild(sp, mid); sp.appendChild(mid);
       if (lightText(sp.parentElement)) sp.classList.add('dk');
       if (h.eff === 'enter' && motion && window.IntersectionObserver) {
-        if (!HV_IO) HV_IO = new IntersectionObserver(function (es) { es.forEach(function (en) { if (en.isIntersecting) { HV_IO.unobserve(en.target); wfxPlay(en.target); } }); }, { threshold: 0.6 });
+        if (!HV_IO) HV_IO = new IntersectionObserver(function (es) { es.forEach(function (en) { var t = en.target; if (en.intersectionRatio >= 0.6) { if (t._armed !== false) { t._armed = false; wfxPlay(t, WFX_DIR === 'up'); } } else if (en.intersectionRatio < 0.05) t._armed = true; }); }, { threshold: [0, 0.05, 0.6] });
         HV_IO.observe(sp);
       }
     });
   }
   function wfxLetters(el) { var t = el.textContent; el.textContent = ''; return Array.from(t).map(function (c) { var s = document.createElement('span'); s.className = 'wl'; s.textContent = c; el.appendChild(s); return s; }); }
-  function wfxPlay(el) {
+  function wfxPlay(el, rev) {
     var h = HVL[+el.dataset.hp]; if (!h || !G) return;
+    if (el._tl) { el._tl.kill(); el._tl = null; }
     if (h.anim === 'glow') { var o = { v: 0 }, paint = function () { var v = o.v; el.style.textShadow = v > 0.002 ? '0 0 ' + (0.12 * v).toFixed(3) + 'em rgba(255,255,255,' + (0.9 * v).toFixed(3) + '), 0 0 ' + (0.5 * v).toFixed(3) + 'em rgba(255,226,170,' + (0.9 * v).toFixed(3) + '), 0 0 ' + (1.1 * v).toFixed(3) + 'em rgba(215,176,110,' + (0.8 * v).toFixed(3) + ')' : ''; };
-      G.timeline({ onUpdate: paint }).to(o, { v: 1, duration: 0.5, ease: 'power2.out', onUpdate: paint }).to(o, { v: 0, duration: 1.1, ease: 'power2.in', onUpdate: paint, onComplete: paint }, '+=0.15'); return; }
+      el._tl = G.timeline({ onUpdate: paint }).to(o, { v: 1, duration: rev ? 1.1 : 0.5, ease: rev ? 'power2.out' : 'power2.out', onUpdate: paint }).to(o, { v: 0, duration: rev ? 0.5 : 1.1, ease: 'power2.in', onUpdate: paint, onComplete: paint }, '+=0.15'); return; }
     var ls = wfxLetters(el);
-    if (h.anim === 'blur') G.fromTo(ls, { opacity: 0, filter: 'blur(10px)' }, { opacity: 1, filter: 'blur(0px)', duration: 0.9, ease: 'expo.out', stagger: 0.04, clearProps: 'filter' });
-    else G.fromTo(ls, { opacity: 0, yPercent: 70 }, { opacity: 1, yPercent: 0, duration: 0.7, ease: 'expo.out', stagger: 0.035 });
+    if (h.anim === 'blur') el._tl = G.fromTo(ls, { opacity: 0, filter: 'blur(10px)' }, { opacity: 1, filter: 'blur(0px)', duration: 0.9, ease: 'expo.out', stagger: { each: 0.04, from: rev ? 'end' : 'start' }, clearProps: 'filter' });
+    else el._tl = G.fromTo(ls, { opacity: 0, yPercent: rev ? -70 : 70 }, { opacity: 1, yPercent: 0, duration: 0.7, ease: 'expo.out', stagger: { each: 0.035, from: rev ? 'end' : 'start' } });
   }
   /* zamiana słowa: zawsze dochodzi do końca, nawet przy szybkim przejechaniu, i wraca dopiero po chwili */
   function wfxSwap(el, on) {
