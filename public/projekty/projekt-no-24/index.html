@@ -641,8 +641,14 @@ body.is-panel .foot { display: none; }
 .hzn b:nth-last-of-type(1) { padding-right: calc(8vw + 10px); }
 /* uproszczenie: dół ekranu bez paska ujęć (numery są u góry), kursor bez licznika: strzałki przy ruchu, ikona przewijania w bezruchu */
 .hero .hind { display: none; }
-body .hcur.arrows::before { width: 92px; background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
+body .hcur.arrows::before { width: 8px; height: 8px; background: #fff; box-shadow: 0 0 0 3px rgba(0,0,0,.2); }
 body .hcur .ar { font-size: 1.5rem; opacity: .85; text-shadow: 0 0 6px rgba(0,0,0,.55), 0 0 14px rgba(0,0,0,.35); }
+/* przejście: kwadrat zostaje kropką, strzałki rozsuwają się z jego środka; w bezruchu wracają i kropka rośnie w ikonę przewijania */
+body .hcur .ar { transition: translate .75s cubic-bezier(.16,1,.3,1), scale .75s cubic-bezier(.16,1,.3,1), transform .25s cubic-bezier(.16,1,.3,1), opacity .3s; }
+body .hcur .ar.l { translate: 26px 0; scale: .4; }
+body .hcur .ar.r { translate: -26px 0; scale: .4; }
+body .hcur.arrows .ar { translate: 0 0; scale: 1; }
+body .hcur.arrows .ar.r { transition-delay: .05s; }
 body .hcur .hs { filter: drop-shadow(0 0 4px rgba(0,0,0,.5)); }
 body .hcur .hs { width: 92px; }
 body .hcur .cn { display: none; }
