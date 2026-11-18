@@ -621,13 +621,26 @@ body.is-panel .foot { display: none; }
 .foot .fb { border-top-color: #333; }
 .nov { background: rgba(0, 0, 0, .6); }
 /* ===== wskaźnik w pierwszym ekranie ===== */
-.hind { position: absolute; z-index: 6; left: 5vw; right: 5vw; bottom: 3.5vh; height: 34px; pointer-events: none; color: #fff; }
-.hind .hk { position: absolute; bottom: 12px; left: calc((var(--i, 0) + .5) / var(--n) * 100%); transform: translateX(-50%); display: flex; align-items: center; gap: 8px; white-space: nowrap; transition: left .7s cubic-bezier(.16,1,.3,1); }
-.hind .hk .sq { width: 8px; height: 8px; background: #fff; }
-.hind .hdots { position: absolute; left: 0; right: 0; bottom: 0; display: flex; gap: 6px; }
-.hind .hdots i { flex: 1; height: 2px; background: rgba(255,255,255,.28); transition: background .5s; }
+/*HERO_HINT_V1*/
+/* wskaźnik ujęć stoi nad pasem rozmycia krawędzi (10vh od dołu), więc jest ostry; napisy w środku stref, poza bocznym rozmyciem */
+.hind { --g: 8px; position: absolute; z-index: 6; left: 5vw; right: 5vw; bottom: calc(10vh + 12px); pointer-events: none; color: #fff; text-shadow: 0 1px 10px rgba(0,0,0,.45); }
+.hind .hn { display: flex; gap: var(--g); font-family: var(--font-mono); font-size: 12px; line-height: 1; letter-spacing: .04em; margin-bottom: 11px; }
+.hind .hn span { flex: 1; text-align: center; color: rgba(255,255,255,.72); transition: color .5s, transform .7s cubic-bezier(.16,1,.3,1); }
+.hind .hn span.on { color: #fff; transform: translateY(-2px); }
+.hind .hdots { position: relative; display: flex; gap: var(--g); height: 3px; }
+.hind .hdots i { flex: 1; height: 3px; background: rgba(255,255,255,.42); transition: background .5s; }
 .hind .hdots i.on { background: #fff; }
-.hero .imgs .hv { transition: opacity .45s cubic-bezier(.33,1,.68,1); }
+.hind .hk { position: absolute; top: 50%; left: calc(var(--i, 0) * ((100% - (var(--n) - 1) * var(--g)) / var(--n) + var(--g)) + (100% - (var(--n) - 1) * var(--g)) / var(--n) / 2); transform: translate(-50%, -50%); transition: left .7s cubic-bezier(.16,1,.3,1); }
+.hind .hk .sq { display: block; width: 10px; height: 10px; background: #fff; box-shadow: 0 0 0 4px rgba(0,0,0,.28); }
+.hind .hhint { display: flex; justify-content: center; align-items: baseline; gap: 14px; margin-top: 13px; font-family: var(--font-mono); font-size: 12px; line-height: 1; letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }
+.hind .hhint b { font-weight: 500; }
+.hind .hhint .hm { color: rgba(255,255,255,.78); }
+.hind .hhint .hm.t { display: none; }
+@media (hover: none) { .hind .hhint .hm.d { display: none; } .hind .hhint .hm.t { display: inline; } }
+.hero:not(.phero) .hl { bottom: calc(10vh + 112px); }
+.hero:not(.phero) .hr { bottom: calc(10vh + 112px + 1.3rem); }
+@media (max-width: 767px) { .hero .hind { bottom: calc(10vh + 12px); } .hind .hhint { display: none; } .hind .hn { font-size: 11px; margin-bottom: 9px; } .hero:not(.phero) .hr { bottom: calc(10vh + 56px); } }
+.hero .imgs .hv { transition: opacity .7s cubic-bezier(.33,1,.68,1); }
 /* ===== taśma: większe karty, napis wychodzi poza zdjęcie, rozmyty dół ===== */
 .pcard-w { width: 78vw; padding: 60px 0; }
 .pcard { width: 66vw; }
@@ -2253,7 +2266,7 @@ body.is-panel .foot { display: none; }
       '<div class="hwrap"><section class="hero" id="start"><div class="imgs">' + coverImg(hl[0], true, 0, 'base') + hl.map(function (p, i) { return coverImg(p, i < 2, 0, 'hv' + (i === 0 ? ' on' : '')); }).join('') + '</div>' +
         '<div class="ov"></div><div class="trig" aria-hidden="true">' + hl.map(function (p, i) { return '<i data-hz="' + i + '"></i>'; }).join('') + '</div><div class="dk"></div>' +
         (function () { var hp = heroParts(site('hero')); return hp.words.length ? '<div class="hl"><h1 aria-label="' + esc(hp.base + ' ' + hp.words.join(', ')) + '">' + rotHtml(hp) + '</h1></div>' : '<div class="hl"><h1 data-hero-light data-hero-casc>' + accHtml(hp.base, hp.accent) + '</h1></div>'; })() + '<div class="hr" data-hero>' + gb('#kontakt', 'Porozmawiajmy') + '</div>' +
-        '<div class="hind" data-hero aria-hidden="true" style="--n:' + hl.length + '"><div class="hk" id="hk"><span class="sq"></span></div><div class="hdots">' + hl.map(function (p, i) { return '<i' + (i === 0 ? ' class="on"' : '') + '></i>'; }).join('') + '</div></div></section>' +
+        '<div class="hind" data-hero aria-hidden="true" style="--n:' + hl.length + '"><div class="hn">' + hl.map(function (p, i) { return '<span' + (i === 0 ? ' class="on"' : '') + '>' + (i < 9 ? '0' : '') + (i + 1) + '</span>'; }).join('') + '</div><div class="hdots">' + hl.map(function (p, i) { return '<i' + (i === 0 ? ' class="on"' : '') + '></i>'; }).join('') + '<div class="hk" id="hk"><span class="sq"></span></div></div><div class="hhint"><b class="hc">Ujęcie 01 / ' + (hl.length < 10 ? '0' : '') + hl.length + '</b><span class="hm d">← poruszaj kursorem →</span><span class="hm t">← przesuń palcem →</span></div></div></section>' +
       '<div class="after-hero">' +
       /* 2. Dlaczego my + liczniki */
       '<section class="pg sec-l"><div class="ct"><div class="intro"><span class="eb g ebc" data-fade>Dlaczego my</span><h2 class="h-m big" data-split>' + esc(hm.why) + '</h2>' + statsHtml() + '</div></div></section>' +
@@ -4242,14 +4255,20 @@ body.is-panel .foot { display: none; }
         if (i === cur || !hv[i]) return; var prev = hv[cur]; cur = i;
         var el = hv[i]; el.style.zIndex = ++zc; el.classList.add('on');
         hv.forEach(function (im, j) { if (j !== i && im !== prev) im.classList.remove('on'); });
-        if (prev) setTimeout(function () { if (hv[cur] !== prev) prev.classList.remove('on'); }, 480);
+        if (prev) setTimeout(function () { if (hv[cur] !== prev) prev.classList.remove('on'); }, 780);
         if (hk) hk.style.setProperty('--i', i);
         hd.forEach(function (d, j) { d.classList.toggle('on', j === i); });
+        hero.querySelectorAll('.hind .hn span').forEach(function (d, j) { d.classList.toggle('on', j === i); });
+        var hc = hero.querySelector('.hind .hc'); if (hc) hc.textContent = 'Ujęcie ' + (i < 9 ? '0' : '') + (i + 1) + ' / ' + (hv.length < 10 ? '0' : '') + hv.length;
+        var cn = document.querySelector('.hcur .cn'); if (cn) cn.textContent = (i + 1) + '/' + hv.length;
       };
+      /* spokojniej: zmiana ujęcia dopiero, gdy kursor zatrzyma się w strefie na chwilę; szybki przejazd przez ekran nie robi serii przeskoków */
+      var dw = null;
       hero.querySelectorAll('.trig i').forEach(function (z) {
         var i = +z.dataset.hz;
-        on(z, 'pointerenter', function () { show(i); });
-        on(z, 'click', function () { show(i); });
+        on(z, 'pointerenter', function () { clearTimeout(dw); dw = setTimeout(function () { show(i); }, 220); });
+        on(z, 'pointerleave', function () { clearTimeout(dw); });
+        on(z, 'click', function () { clearTimeout(dw); show(i); });
       });
       /* telefon i tablet: przesuwanie palcem w poziomie działa jak kursor, pion zostaje dla przewijania */
       var trg = hero.querySelector('.trig'), tt = null;

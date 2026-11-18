@@ -16,6 +16,8 @@ Panel to osobna aplikacja w `tools/panel/` (kopiowana do `public/panel/` przez `
 
 Efekt tekstu „Animacja przy wejściu” (scroll w dół: wersja normalna, scroll w górę: odwrócona) dopisuje do zbudowanych stron skrypt `tools/patch_wfx.py`. Kod strony powstaje z zewnętrznego źródła, więc po każdym `tools/build.py` trzeba go uruchomić ponownie (jest idempotentny).
 
+Wskaźnik ujęć na pierwszym ekranie (numery 01-05, kuleczka, podpis, spokojniejsze przełączanie) dopisuje `tools/patch_hero_hint.py`. Po każdym `tools/build.py` uruchom go po `patch_wfx.py` (też idempotentny).
+
 Po zmianie adresu projektu stary adres przekierowuje na nowy (skrypt `cms.js`). Statyczne pliki SEO (tytuły i opisy w `<head>`, `sitemap.xml`, `llms.txt`) odświeżają się dopiero po ponownym zbudowaniu strony `tools/build.py`.
 
 ### Generator opisów (Claude)
