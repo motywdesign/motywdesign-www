@@ -1600,6 +1600,45 @@ body.is-panel .foot { display: none; }
 @media (max-width: 767px) { .logos-sec .logos-h { margin-bottom: 3rem; } .lg-g .logo-t { min-width: 110px; height: 130px; padding: 0 .75rem; } .lg-g .logo-t img { height: 60px; max-width: 220px; } .lg-g .logo-t span { font-size: 1.4rem; } .lg-g { gap: .35rem; padding-right: .35rem; } .logos-track { animation-duration: calc(var(--n) * 3s); } }
 @media (prefers-reduced-motion: reduce) { .logos-slide { overflow-x: auto; } .logos-track { animation: none; } .lg-g[aria-hidden] { display: none; } }
 
+/*MOBILE_FIX_V1*/
+/* minimalne rozmiary tekstu: etykiety mono nie mniejsze niż 12px */
+.nx-meta dt, .nx-rm, .ck-cp { font-size: .75rem; }
+.parea small { font-size: max(.5em, 12px); }
+.filters button sup { font-size: 11px; }
+.hzn .hzc .t { display: none; }
+@media (hover: none) { .hzn .hzc .d { display: none; } .hzn .hzc .t { display: inline; } }
+@media (max-width: 767px) {
+  /* nagłówki podstron (Projekty, Studio, Usługi) miały 4rem i wychodziły poza ekran */
+  .hto .h-m.big { font-size: 1.9rem; line-height: 1.18; }
+  /* opis projektu: etykieta nad tekstem, nie obok (wąska kolumna) */
+  .nx-sg h3, .nx-st { grid-column: 1 / -1; }
+  /* karty na liście projektów: tytuł nad opisem, nic nie wychodzi poza kartę */
+  .bcard .ptx, .bcard.wide .ptx { flex-direction: column; align-items: flex-start; gap: .35rem; padding: 0 1rem; bottom: 1rem; }
+  .bcard .ptx h3, .bcard.wide .ptx h3 { font-size: 1.5rem; }
+  .bcard .ptx .eb { text-align: left; font-size: .75rem; text-shadow: 0 1px 8px rgba(0,0,0,.55); }
+  .bcard .ptx .eb em, .pcard .ptx .eb em { color: #e8e8e8; }
+  .bcard .pim::after { background: linear-gradient(180deg, #0000 30%, rgba(0,0,0,.74)); }
+  .pcard .ptx .eb { text-shadow: 0 1px 8px rgba(0,0,0,.55); }
+  /* ostatnia karta taśmy: napis się mieścił tylko na komputerze */
+  /* wezwanie do kontaktu: długie słowo mieści się też na 320 px */
+  .pcard-w.all a { font-size: 1.5rem; }
+  .pcard-w.all a svg, .pcard-w.all a .aw svg { width: 1.5rem; height: 1.5rem; }
+}
+@media (max-width: 360px) { .cta .cb h2 { font-size: 1.9rem; } }
+/* tablet: karty w dwóch kolumnach są wąskie, więc opis pod tytułem; nagłówek bez dużego wcięcia */
+@media (max-width: 1100px) {
+  .bcard:not(.wide) .ptx { flex-direction: column; align-items: flex-start; gap: .35rem; padding: 0 1rem; bottom: 1rem; }
+  .bcard:not(.wide) .ptx h3 { font-size: 1.5rem; }
+  .bcard:not(.wide) .ptx .eb { text-align: left; font-size: .75rem; text-shadow: 0 1px 8px rgba(0,0,0,.55); }
+  .bcard:not(.wide) .pim::after { background: linear-gradient(180deg, #0000 30%, rgba(0,0,0,.74)); }
+}
+@media (max-width: 900px) { .hto .h-m.big { text-indent: 0; font-size: 2.6rem; } }
+@media (max-width: 767px) { .hto .h-m.big { font-size: 1.9rem; } }
+/* większe pola dotyku bez zmiany wyglądu */
+@media (pointer: coarse) {
+  .navc .logo, .navc .tog, .foot .fb .leg a, .foot .fb .logo, #nsoc a { position: relative; }
+  .navc .logo::after, .navc .tog::after, .foot .fb .leg a::after, .foot .fb .logo::after, #nsoc a::after { content: ""; position: absolute; inset: -11px -8px; }
+}
 </style>
 <div class="pre" id="pre" role="status" aria-label="Wczytywanie strony"><div class="mo" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div class="pbw"><div class="pbar" role="progressbar" aria-label="Postęp wczytywania" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><b></b></div><span class="pct" aria-hidden="true">0%</span></div></div>
 <a class="skip" href="#view">Przejdź do treści</a>
@@ -2278,7 +2317,7 @@ body.is-panel .foot { display: none; }
     return '' +
       /* 1. Pierwszy ekran */
       '<div class="hwrap"><section class="hero" id="start"><div class="imgs">' + coverImg(hl[0], true, 0, 'base') + hl.map(function (p, i) { return coverImg(p, i < 2, 0, 'hv' + (i === 0 ? ' on' : '')); }).join('') + '</div>' +
-        '<div class="ov"></div><div class="trig" aria-hidden="true">' + hl.map(function (p, i) { return '<i data-hz="' + i + '"></i>'; }).join('') + '</div><div class="hzn" aria-hidden="true" style="--n:' + hl.length + '"><div class="zh"></div>' + hl.map(function (p, i) { return i ? '<i style="left:' + (i * 100 / hl.length) + '%"></i>' : ''; }).join('') + hl.map(function (p, i) { return '<b' + (i === 0 ? ' class="on"' : '') + ' style="left:' + (i * 100 / hl.length) + '%">' + (i < 9 ? '0' : '') + (i + 1) + '</b>'; }).join('') + '<div class="hzc">' + hl.length + ' ujęć: poruszaj kursorem w lewo i w prawo</div></div><div class="dk"></div>' +
+        '<div class="ov"></div><div class="trig" aria-hidden="true">' + hl.map(function (p, i) { return '<i data-hz="' + i + '"></i>'; }).join('') + '</div><div class="hzn" aria-hidden="true" style="--n:' + hl.length + '"><div class="zh"></div>' + hl.map(function (p, i) { return i ? '<i style="left:' + (i * 100 / hl.length) + '%"></i>' : ''; }).join('') + hl.map(function (p, i) { return '<b' + (i === 0 ? ' class="on"' : '') + ' style="left:' + (i * 100 / hl.length) + '%">' + (i < 9 ? '0' : '') + (i + 1) + '</b>'; }).join('') + '<div class="hzc"><span class="d">' + hl.length + ' ujęć: poruszaj kursorem w lewo i w prawo</span><span class="t">' + hl.length + ' ujęć: przesuń palcem w lewo i w prawo</span></div></div><div class="dk"></div>' +
         (function () { var hp = heroParts(site('hero')); return hp.words.length ? '<div class="hl"><h1 aria-label="' + esc(hp.base + ' ' + hp.words.join(', ')) + '">' + rotHtml(hp) + '</h1></div>' : '<div class="hl"><h1 data-hero-light data-hero-casc>' + accHtml(hp.base, hp.accent) + '</h1></div>'; })() + '<div class="hr" data-hero>' + gb('#kontakt', 'Porozmawiajmy') + '</div>' +
         '<div class="hind" data-hero aria-hidden="true" style="--n:' + hl.length + '"><div class="hk" id="hk"><span class="sq"></span></div><div class="hdots">' + hl.map(function (p, i) { return '<i' + (i === 0 ? ' class="on"' : '') + '></i>'; }).join('') + '</div></div></section>' +
       '<div class="after-hero">' +
