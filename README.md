@@ -21,7 +21,7 @@ Po zmianie adresu projektu stary adres przekierowuje na nowy (skrypt `cms.js`). 
 
 ### Generator opisów (Claude)
 
-Przyciski „Wygeneruj opis” i „Opisz zdjęcia” wołają serwer, a on API Anthropic. Klucz wpisz raz na hostingu, w pliku `data/ai.php` (nie w repozytorium; `config.php` nadpisuje się przy każdym wdrożeniu):
+Przyciski „Wygeneruj opis” i „Opisz zdjęcia” wołają serwer, a on API Anthropic. Najprościej: dodaj w GitHubie sekret `ANTHROPIC_API_KEY` (Settings → Secrets and variables → Actions). Wdrożenie samo utworzy na hostingu plik `data/ai.php` (krok „Włącz generator opisów”), a bez sekretu go pomija. Ręcznie: klucz w pliku `data/ai.php` na hostingu (nie w repozytorium; `config.php` nadpisuje się przy każdym wdrożeniu):
 
 ```php
 <?php exit; ?>

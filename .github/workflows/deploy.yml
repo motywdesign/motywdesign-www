@@ -45,6 +45,31 @@ jobs:
           mirror -R --parallel=2 --verbose -x '^(img|fonts|lib)/' public .
           bye
           LFTP
+      - name: Włącz generator opisów (klucz API z sekretu)
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          FTP_HOST: ${{ secrets.FTP_HOST }}
+          FTP_USER: ${{ secrets.FTP_USER }}
+          FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+          FTP_DIR: ${{ secrets.FTP_DIR }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then echo "Brak sekretu ANTHROPIC_API_KEY, generator opisów zostaje wyłączony."; exit 0; fi
+          DIR="${FTP_DIR:-.}"
+          umask 077
+          python3 -c 'import json,os; print("<?php exit; ?>"); print(json.dumps({"key": os.environ["ANTHROPIC_API_KEY"], "model": "claude-sonnet-5-5"}))' > /tmp/ai.php
+          lftp -u "$FTP_USER","$FTP_PASSWORD" "$FTP_HOST" <<LFTP
+          set ftp:passive-mode on
+          set ftp:ssl-allow yes
+          set ssl:verify-certificate no
+          set net:timeout 30
+          set net:max-retries 8
+          set cmd:fail-exit yes
+          cd "$DIR"
+          mkdir -p -f data
+          put /tmp/ai.php -o data/ai.php
+          bye
+          LFTP
+          rm -f /tmp/ai.php
       - name: Wyślij narzędzia na subdomenę panel
         env:
           FTP_HOST: ${{ secrets.FTP_HOST }}
