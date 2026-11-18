@@ -79,12 +79,36 @@ UPGRADE5 = [
  (".gpk .gx { display: none; width: min(300px, calc(100vw - 24px));",
   ".gpk .gb button { font: inherit; color: #fff; background: #111; border: 1px solid #444; border-radius: 8px; padding: 9px 12px; cursor: pointer; } /*WFX_V5*/\n.gpk .gx { display: none; width: min(300px, calc(100vw - 24px));"),
 ]
+
+# v6: testowa nakładka z podziałką granic animacji, włączana dopiskiem ?granice do adresu (nie widać jej gościom)
+DBG_JS = r'''(function () { try {
+  if (!/[?&]granice\b/.test(location.search)) return;
+  var d = document, r = d.createElement('div'); r.setAttribute('aria-hidden', 'true');
+  r.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:2147482999;font:600 11px/1.2 ui-monospace,Menlo,monospace';
+  function build() {
+    var h = innerHeight, desk = matchMedia('(min-width: 1024px) and (hover: hover) and (pointer: fine)').matches, y = Math.round(h * (desk ? 0.67 : 0.85)), s = '';
+    s += '<div style="position:absolute;left:0;top:0;bottom:0;width:34px;background:rgba(0,0,0,.55);border-right:1px solid rgba(255,255,255,.5)"></div>';
+    for (var p = 0; p <= 100; p += 5) { var t = Math.round(h * p / 100), big = p % 10 === 0; s += '<div style="position:absolute;left:' + (big ? 10 : 20) + 'px;width:' + (big ? 24 : 14) + 'px;top:' + t + 'px;height:1px;background:#fff"></div>'; if (big && p > 0 && p < 100) s += '<div style="position:absolute;left:38px;top:' + (t - 6) + 'px;color:#fff;text-shadow:0 0 3px #000,0 0 3px #000">' + p + '%</div>'; }
+    s += '<div style="position:absolute;left:0;right:0;top:' + y + 'px;border-top:2px dashed #ff3b30"></div>';
+    s += '<div style="position:absolute;left:80px;top:' + (y - 28) + 'px;background:#ff3b30;color:#fff;padding:3px 7px;border-radius:4px">w dół: tu animacja wchodzi (start)</div>';
+    s += '<div style="position:absolute;left:80px;top:' + (y + 6) + 'px;background:#0a84ff;color:#fff;padding:3px 7px;border-radius:4px">w górę: tu animacja się cofa</div>';
+    s += '<div style="position:absolute;left:0;right:0;top:0;border-top:2px dashed #0a84ff"></div>';
+    s += '<div style="position:absolute;right:8px;top:8px;background:#000;color:#fff;padding:4px 8px;border-radius:4px;opacity:.85">TEST: granice animacji (usuń ?granice z adresu, żeby wyłączyć)</div>';
+    r.innerHTML = s;
+  }
+  function add() { build(); d.body.appendChild(r); }
+  if (d.body) add(); else addEventListener('DOMContentLoaded', add);
+  addEventListener('resize', build);
+} catch (e) {} })();'''
+UPGRADE6 = [
+ ("</body>", "<script>/*WFX_V6*/" + DBG_JS + "</script>\n</body>"),
+]
 def main():
     n = 0
     for f in sorted(glob.glob(str(PUB / '**/*.html'), recursive=True)):
         s = Path(f).read_text(encoding='utf-8')
-        if 'wfxPlay' not in s or 'WFX_V5' in s: continue
-        steps = ([] if MARK in s else SUBS) + ([] if 'WFX_V2' in s else UPGRADE) + ([] if 'WFX_V3' in s else UPGRADE3) + ([] if 'WFX_V4' in s else UPGRADE4) + UPGRADE5
+        if 'wfxPlay' not in s or 'WFX_V6' in s: continue
+        steps = ([] if MARK in s else SUBS) + ([] if 'WFX_V2' in s else UPGRADE) + ([] if 'WFX_V3' in s else UPGRADE3) + ([] if 'WFX_V4' in s else UPGRADE4) + ([] if 'WFX_V5' in s else UPGRADE5) + UPGRADE6
         for a, b in steps:
             if s.count(a) != 1:
                 sys.exit('Nie znaleziono dokładnie jednego miejsca w %s dla:\n%s' % (f, a[:90]))
