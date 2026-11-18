@@ -641,7 +641,9 @@ body.is-panel .foot { display: none; }
 .hzn b:nth-last-of-type(1) { padding-right: calc(8vw + 10px); }
 /* uproszczenie: dół ekranu bez paska ujęć (numery są u góry), kursor bez licznika: strzałki przy ruchu, ikona przewijania w bezruchu */
 .hero .hind { display: none; }
-body .hcur.arrows::before { width: 92px; }
+body .hcur.arrows::before { width: 92px; background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; }
+body .hcur .ar { font-size: 1.5rem; opacity: .85; text-shadow: 0 0 6px rgba(0,0,0,.55), 0 0 14px rgba(0,0,0,.35); }
+body .hcur .hs { filter: drop-shadow(0 0 4px rgba(0,0,0,.5)); }
 body .hcur .hs { width: 92px; }
 body .hcur .cn { display: none; }
 .hzn .hzc { position: absolute; left: 50%; top: calc(46px + 6vh); transform: translateX(-50%); padding: 10px 16px; background: rgba(0,0,0,.6); font-size: 12px; letter-spacing: .04em; white-space: nowrap; opacity: 0; transition: opacity .5s; }
