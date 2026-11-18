@@ -227,6 +227,7 @@
     MD.$('#app').innerHTML =
       '<header class="top"><a class="brand" href="#/projekty"><span class="sq"></span><b>motywdesign</b><span class="muted">Panel</span></a><span class="sp"></span>' +
       '<span class="state" id="state"></span>' +
+      '<a class="btn" href="/" target="_blank" rel="noopener">Zobacz stronę<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M4 2h6v6M10 2L3 9"/></svg></a>' +
       '<button class="btn" data-act="tools" aria-haspopup="menu">Narzędzia strony<svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2.5 4.5l3.5 3.5 3.5-3.5"/></svg></button>' +
       '<span class="muted hide-m">' + esc(S.email || '') + '</span><button class="btn ghost hide-m" data-act="logout">Wyloguj</button></header>' +
       '<div id="strip"></div><div id="recov"></div><div class="shell"><nav class="nav" id="nav" aria-label="Panel"></nav><main id="main" tabindex="-1"></main></div><div class="tabbar" id="tabbar"></div>';
