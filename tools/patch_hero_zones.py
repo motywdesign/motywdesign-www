@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Pierwszy ekran, wariant C: linie podziału 5 stref + numery 01-05 + podświetlenie strefy pod kursorem
-(przy pierwszym najechaniu na ok. 2,8 s mocniejsze linie z podpisem, potem przygasają), spokojniejsze przełączanie
-(zmiana ujęcia po 220 ms zatrzymania kursora, przenikanie 0,7 s). Usuwa też czarną podziałkę testową (WFX_V6-V9).
+(przy pierwszym najechaniu na ok. 2,8 s mocniejsze linie z podpisem, potem przygasają), natychmiastowe przełączanie ujęć (bez opóźnienia)
+  Usuwa też czarną podziałkę testową (WFX_V6-V9).
 Idempotentny (znacznik HERO_ZONES_V1). Uruchamiać po każdym przebudowaniu, po patch_wfx.py.
 Użycie: patch_hero_zones.py [plik.html ...]"""
 import glob, re, sys
@@ -11,7 +11,7 @@ MARK = 'HERO_ZONES_V1'
 
 CSS_OLD = ".hero .imgs .hv { transition: opacity .45s cubic-bezier(.33,1,.68,1); }"
 CSS_NEW = """/*HERO_ZONES_V1*/
-.hero .imgs .hv { transition: opacity .7s cubic-bezier(.33,1,.68,1); }
+.hero .imgs .hv { transition: opacity .45s cubic-bezier(.33,1,.68,1); }
 .hzn { position: absolute; inset: 0; z-index: 4; pointer-events: none; opacity: 0; transition: opacity .6s; color: #fff; font-family: var(--font-mono); text-transform: uppercase; }
 .hero.hz-in .hzn, .hero.hz-pk .hzn { opacity: 1; }
 .hzn .zh { position: absolute; top: 46px; bottom: 0; left: calc(var(--hz, 0) * 100% / var(--n)); width: calc(100% / var(--n)); background: rgba(255,255,255,.07); border-top: 3px solid #fff; transition: left .7s cubic-bezier(.16,1,.3,1); }
@@ -22,10 +22,11 @@ CSS_NEW = """/*HERO_ZONES_V1*/
 .hzn b::before { content: ""; width: 8px; height: 8px; background: #7a4f36; opacity: 0; transition: opacity .4s; }
 .hzn b.on::before { opacity: 1; }
 .hzn b:nth-last-of-type(1) { padding-right: calc(8vw + 10px); }
-/* uproszczenie: dół ekranu bez paska ujęć (numery są u góry), kursor to zwykły biały kwadrat */
+/* uproszczenie: dół ekranu bez paska ujęć (numery są u góry), kursor bez licznika: strzałki przy ruchu, ikona przewijania w bezruchu */
 .hero .hind { display: none; }
-body .hcur.arrows::before, body .hcur.scroll::before { width: 12px; height: 12px; border-radius: 0; background: #fff; box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none; }
-body .hcur .hs, body .hcur .hm { display: none; }
+body .hcur.arrows::before { width: 92px; }
+body .hcur .hs { width: 92px; }
+body .hcur .cn { display: none; }
 .hzn .hzc { position: absolute; left: 50%; top: calc(46px + 6vh); transform: translateX(-50%); padding: 10px 16px; background: rgba(0,0,0,.6); font-size: 12px; letter-spacing: .04em; white-space: nowrap; opacity: 0; transition: opacity .5s; }
 .hero.hz-pk .hzn .hzc { opacity: 1; }
 @media (max-width: 767px) { .hzn b:nth-last-of-type(1) { padding-right: 16px; } .hzn b { font-size: 11px; } .hzn .hzc { white-space: normal; text-align: center; max-width: 80vw; } }"""
@@ -50,7 +51,7 @@ JS_NEW = """        hd.forEach(function (d, j) { d.classList.toggle('on', j === 
       var dw = null;
       hero.querySelectorAll('.trig i').forEach(function (z) {
         var i = +z.dataset.hz;
-        on(z, 'pointerenter', function () { clearTimeout(dw); dw = setTimeout(function () { show(i); }, 220); });
+        on(z, 'pointerenter', function () { clearTimeout(dw); show(i); });
         on(z, 'pointerleave', function () { clearTimeout(dw); });
         on(z, 'click', function () { clearTimeout(dw); show(i); });
       });
@@ -66,7 +67,7 @@ JS_NEW = """        hd.forEach(function (d, j) { d.classList.toggle('on', j === 
       })();"""
 
 JS_OLD2 = "if (prev) setTimeout(function () { if (hv[cur] !== prev) prev.classList.remove('on'); }, 480);"
-JS_NEW2 = "if (prev) setTimeout(function () { if (hv[cur] !== prev) prev.classList.remove('on'); }, 780);"
+JS_NEW2 = "if (prev) setTimeout(function () { if (hv[cur] !== prev) prev.classList.remove('on'); }, 480);"
 
 SUBS = [(CSS_OLD, CSS_NEW), (HTML_OLD, HTML_NEW), (JS_OLD, JS_NEW), (JS_OLD2, JS_NEW2)]
 DBG = re.compile(r'<script>/\*WFX_V6\*/.*?</script>(?=\n</body>)', re.S)
