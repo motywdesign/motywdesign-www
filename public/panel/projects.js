@@ -54,7 +54,7 @@
   MD.acts.sw = function (b) { MD.set(b.dataset.scope, b.dataset.path, b.getAttribute('aria-checked') !== 'true'); MD.rerender(); };
   MD.acts.pick = function (b) {
     var sc = b.dataset.scope, pa = b.dataset.path;
-    MD.pickPhoto({ title: 'Wybierz zdjęcie', current: MD.get(sc, pa), video: !!b.dataset.video, auto: !b.dataset.logo, onPick: function (ref) { MD.set(sc, pa, ref || (/\.\d+$/.test(pa) ? '' : undefined)); MD.rerender(); } });
+    MD.pickPhoto({ title: 'Wybierz zdjęcie', current: MD.get(sc, pa), video: !!b.dataset.video, auto: !b.dataset.logo, onPick: function (ref) { if (b.dataset.logo) ref = String(ref || '').replace(/^blob:/, ''); MD.set(sc, pa, ref || (/\.\d+$/.test(pa) ? '' : undefined)); MD.rerender(); } });
   };
   MD.acts['pick-clear'] = function (b) { MD.set(b.dataset.scope, b.dataset.path, /\.\d+$/.test(b.dataset.path) ? '' : undefined); MD.rerender(); };
   /* lista powtarzalnych wierszy (opinie, osiągnięcia, partnerzy…): fields = [[klucz, etykieta, {ta, span, pick}]] */

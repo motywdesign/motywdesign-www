@@ -50,7 +50,10 @@
     ref = ref || ''; if (!ref) return null;
     if (ref.indexOf('vid:') === 0) return { url: MD.imgUrl(ref), video: true, label: 'Własne wideo' };
     if (ref.indexOf('blob:') === 0) return { url: MD.imgUrl(ref), label: 'Zdjęcie' + (MD.photoOwner(ref.slice(5)) ? ' z projektu: ' + MD.photoOwner(ref.slice(5)) : '') };
-    var p = S.D.projects[ref]; if (!p) return { url: '', label: 'Projekt usunięty' };
+    var p = S.D.projects[ref];
+    /* logo partnerów jest zapisane jako samo id pliku (bez „blob:”), tak jak czyta je strona */
+    if (!p && (S.imgx[ref] || /^[0-9a-f]{32}$/.test(ref))) return { url: MD.imgUrl(ref), label: 'Logo' + (MD.photoOwner(ref) ? ' z projektu: ' + MD.photoOwner(ref) : '') };
+    if (!p) return { url: '', label: 'Projekt usunięty' };
     var im = p.images && p.images[0]; return { url: im ? (im.video ? '' : MD.imgUrl(im.th || im.id)) : '', label: 'Okładka: ' + (p.title || ref) };
   };
   MD.photoOwner = function (id) { var t = ''; MD.projects().some(function (p) { return (p.images || []).some(function (im) { if (im.id === id) { t = p.title || p.id; return true; } }); }); return t; };
