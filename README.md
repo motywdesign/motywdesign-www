@@ -30,4 +30,4 @@ Przyciski „Wygeneruj opis” i „Opisz zdjęcia” wołają serwer, a on API 
 
 Bez pliku przyciski pokażą instrukcję, reszta panelu działa. Limit: 40 zapytań na godzinę.
 
-Po patch_wfx.py uruchom też `tools/patch_hero_zones.py` (linie stref i kursor pierwszego ekranu) oraz `tools/patch_mobile_fixes.py` (poprawki telefonów z audytu 18.11.2026). Wszystkie trzy są idempotentne.
+Po patch_wfx.py uruchom też `tools/patch_hero_zones.py` (linie stref i kursor pierwszego ekranu) `tools/patch_mobile_fixes.py` (poprawki telefonów z audytu 18.11.2026) i `tools/patch_polish_v2.py` (wcięcie nagłówków na tablecie, maska animacji, strzałki kursora). Wszystkie cztery są idempotentne.

@@ -1639,6 +1639,21 @@ body.is-panel .foot { display: none; }
   .navc .logo, .navc .tog, .foot .fb .leg a, .foot .fb .logo, #nsoc a { position: relative; }
   .navc .logo::after, .navc .tog::after, .foot .fb .leg a::after, .foot .fb .logo::after, #nsoc a::after { content: ""; position: absolute; inset: -11px -8px; }
 }
+/*POLISH_V2*/
+/* tablet: bez wcięcia 33% w nagłówkach, pierwsze słowo nie stoi samo w linii */
+@media (max-width: 1100px) {
+  .h-m, .svc .ht h3 { --ind: 0; text-indent: 0; }
+}
+/* bez wcięcia etykieta sekcji nie ma miejsca obok nagłówka: stoi nad nim */
+@media (min-width: 768px) and (max-width: 1100px) {
+  .intro .ebc { position: static; top: auto; grid-column: 1 / -1; margin-bottom: -2.75rem; }
+}
+/* maska animacji nagłówków: miejsce na ogonki j/p w kursywie (układ bez zmian dzięki ujemnemu marginesowi) */
+.split-mask { padding-bottom: .26em; margin-bottom: -.26em; }
+/* strzałki kursora: większe, pełna widoczność, mocniejszy cień */
+body .hcur .ar { font-size: 1.75rem; opacity: .92; text-shadow: 0 0 2px rgba(0,0,0,.7), 0 0 8px rgba(0,0,0,.55), 0 0 18px rgba(0,0,0,.4); }
+body .hcur.mv-l .ar.l, body .hcur.mv-r .ar.r { opacity: 1; }
+body .hcur .hs { width: 104px; }
 </style>
 <div class="pre" id="pre" role="status" aria-label="Wczytywanie strony"><div class="mo" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div class="pbw"><div class="pbar" role="progressbar" aria-label="Postęp wczytywania" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><b></b></div><span class="pct" aria-hidden="true">0%</span></div></div>
 <a class="skip" href="#view">Przejdź do treści</a>
