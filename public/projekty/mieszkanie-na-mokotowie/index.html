@@ -2016,9 +2016,9 @@ body.is-panel .foot { display: none; }
     var r = curRoute || route();
     if (r.v === 'panel' && (editing || contentDraft || modsDraft)) { if (editing) renderPanelList(); return; }
     if (!booted) return;
-    var y = window.scrollY; quiet = true; render(r); quiet = false; window.scrollTo(0, y);
+    var y = window.scrollY; quiet = true; QY = y; render(r); quiet = false; window.scrollTo(0, y);
   }
-  var quiet = false, booted = false;
+  var quiet = false, booted = false, QY = 0; /*WFX_V3*/
   function boot() { if (booted) return; booted = true; go(true); applyModules(); }
 
 
@@ -3927,9 +3927,9 @@ body.is-panel .foot { display: none; }
     els.forEach(function (el, i) {
       var c = el.querySelector('[data-count]'), end = +c.dataset.count, dec = String(c.dataset.count).indexOf('.') >= 0 ? 1 : 0;
       if (instant || !motion) { c.textContent = numVal(end, dec); return; }
-      var o = { v: 0 };
-      G.from(el, { y: 40, opacity: 0, duration: 0.75, ease: 'power3.out', delay: i * 0.12, scrollTrigger: { trigger: group, start: txtStart(), once: true } });
-      G.to(o, { v: end, duration: 1.6, ease: 'expo.out', delay: i * 0.12, onUpdate: function () { c.textContent = numVal(o.v, dec); }, scrollTrigger: { trigger: group, start: txtStart(), once: true } });
+      G.set(el, { y: 40, opacity: 0 }); c.textContent = numVal(0, dec);
+      var play = function (rev) { if (el._o) G.killTweensOf(el._o); G.killTweensOf(el); var o = el._o = { v: rev ? end * 1.5 : 0 }; G.fromTo(el, { y: rev ? -40 : 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.75, ease: 'power3.out', delay: i * 0.12 }); G.to(o, { v: end, duration: 1.6, ease: 'expo.out', delay: i * 0.12, onUpdate: function () { c.textContent = numVal(o.v, dec); } }); };
+      ST.create({ trigger: group, start: txtStart(), onEnter: function () { play(false); }, onEnterBack: function () { play(true); }, onLeaveBack: function () { if (el._o) G.killTweensOf(el._o); G.killTweensOf(el); G.set(el, { y: 40, opacity: 0 }); c.textContent = numVal(0, dec); } });
     });
   }
   /* start animacji tekstu: na komputerze dopiero gdy tekst dojdzie do ok. 1/3 wysokości okna od dołu (clamp: teksty przy końcu strony i tak się odpalą), na telefonie jak dotąd, zaraz po wejściu */
@@ -3938,20 +3938,25 @@ body.is-panel .foot { display: none; }
     /* liczone ręcznie: tekst już widoczny na starcie odpala się od razu, a tekst, do którego nie da się dojechać tak wysoko (koniec strony), odpala się tuż przed dołem */
     return function (self) { var el = self.trigger, y = el.getBoundingClientRect().top + (window.scrollY || 0) - innerHeight * 0.67; return Math.min(y, Math.max(0, ST.maxScroll(window) - 2)); };
   }
+  function bidir(el, items, off, dur, ease, st) {
+    G.set(items, { yPercent: off });
+    var go = function (rev) { G.killTweensOf(items); G.fromTo(items, { yPercent: rev ? -off : off }, { yPercent: 0, duration: dur, ease: ease, stagger: { each: st, from: rev ? 'end' : 'start' } }); };
+    ST.create({ trigger: el, start: txtStart(), onEnter: function () { go(false); }, onEnterBack: function () { go(true); }, onLeaveBack: function () { G.killTweensOf(items); G.set(items, { yPercent: off }); } });
+  }
   function splitLines(el, opts) {
     if (!motion || !SPL) return null;
     var s = new SPL(el, { type: 'lines', mask: 'lines', linesClass: 'split-line', reduceWhiteSpace: false }); splits.push(s);
     var first = s.masks && s.masks[0] || (s.lines[0] && s.lines[0].parentNode);
     if (first) first.classList.add('first');
     if (opts && opts.instant) return s;
-    G.from(s.lines, Object.assign({ yPercent: 110, duration: 0.9, ease: 'power3.out', stagger: 0.04 }, opts && opts.delay != null ? { delay: opts.delay } : { scrollTrigger: { trigger: el, start: txtStart(), once: true } }));
+    if (opts && opts.delay != null) G.from(s.lines, { yPercent: 110, duration: 0.9, ease: 'power3.out', stagger: 0.04, delay: opts.delay }); else bidir(el, s.lines, 110, 0.9, 'power3.out', 0.04);
     return s;
   }
   function splitWords(el, instant) {
     if (!motion || !SPL) return;
     var s = new SPL(el, { type: 'words', mask: 'words', wordsClass: 'split-word', reduceWhiteSpace: false }); splits.push(s);
     if (instant) return;
-    G.from(s.words, { yPercent: 105, duration: 0.75, ease: 'power2.out', stagger: 0.018, scrollTrigger: { trigger: el, start: txtStart(), once: true } });
+    bidir(el, s.words, 105, 0.75, 'power2.out', 0.018);
   }
 
   /* Efekty słów (zakładka Podglądy w panelu albo tryb „Efekty słów” w menu podręcznym):
@@ -4111,12 +4116,12 @@ body.is-panel .foot { display: none; }
     bindDrop();
     if (r.v === 'panel') { if (LEN) LEN.start(); return; }
     applyHovers(); bindM2(); bindBA(); if (window.__teApply) window.__teApply();
-    var instant = quiet || !motion;
+    var instant = quiet || !motion, inst0 = !motion, qs = function (el) { return quiet && (el.getBoundingClientRect().top + (window.scrollY || 0)) < QY + innerHeight * 0.9; };
     /* teksty */
-    view.querySelectorAll('[data-split]').forEach(function (el) { splitLines(el, { instant: instant }); });
-    view.querySelectorAll('[data-words]').forEach(function (el) { splitWords(el, instant); });
+    view.querySelectorAll('[data-split]').forEach(function (el) { splitLines(el, { instant: inst0 || qs(el) }); });
+    view.querySelectorAll('[data-words]').forEach(function (el) { splitWords(el, inst0 || qs(el)); });
     if (motion && !instant) view.querySelectorAll('[data-fade]').forEach(function (el) { var media = el.querySelector('img, video, picture, .pim'); if (media) G.fromTo(el, { y: 90, opacity: 0 }, { y: 0, opacity: 1, ease: 'none', immediateRender: true, scrollTrigger: { trigger: el, start: 'top bottom', end: 'top 55%', scrub: 0.6 } }); else G.from(el, { y: 30, opacity: 0, duration: 0.9, ease: 'power3.out', scrollTrigger: { trigger: el, start: txtStart(), once: true } }); });
-    view.querySelectorAll('.stats').forEach(function (g) { counters(g, instant); });
+    view.querySelectorAll('.stats').forEach(function (g) { counters(g, inst0 || qs(g)); });
     nxFx(instant);
 
     /* pierwszy ekran: wejście ze skalą i rozmyciem, tytuł linijkami */

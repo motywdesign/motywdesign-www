@@ -38,12 +38,38 @@ UPGRADE = [
  ("{ opacity: 0, filter: 'blur(10px)' }, { opacity: 1, filter: 'blur(0px)', duration: 0.9,",
   "{ opacity: 0, filter: 'blur(10px)', xPercent: rev ? 60 : 0 }, { opacity: 1, filter: 'blur(0px)', xPercent: 0, duration: 0.9,"),
 ]
+
+# v3: wbudowane animacje strony (wsuwanie tekstu liniami i słowami, liczenie cyfr) odpalają się za każdym wejściem w ekran:
+# w dół normalnie, w górę w wersji odwróconej. Naprawia też „ciche” ponowne renderowanie po wczytaniu danych, które kasowało te animacje.
+UPGRADE3 = [
+ ("var quiet = false, booted = false;", "var quiet = false, booted = false, QY = 0; /*WFX_V3*/"),
+ ("var y = window.scrollY; quiet = true; render(r);", "var y = window.scrollY; quiet = true; QY = y; render(r);"),
+ ("var instant = quiet || !motion;",
+  "var instant = quiet || !motion, inst0 = !motion, qs = function (el) { return quiet && (el.getBoundingClientRect().top + (window.scrollY || 0)) < QY + innerHeight * 0.9; };"),
+ ("splitLines(el, { instant: instant });", "splitLines(el, { instant: inst0 || qs(el) });"),
+ ("splitWords(el, instant); });", "splitWords(el, inst0 || qs(el)); });"),
+ ("counters(g, instant); });", "counters(g, inst0 || qs(g)); });"),
+ ("  function splitLines(el, opts) {",
+  "  function bidir(el, items, off, dur, ease, st) {\n"
+  "    G.set(items, { yPercent: off });\n"
+  "    var go = function (rev) { G.killTweensOf(items); G.fromTo(items, { yPercent: rev ? -off : off }, { yPercent: 0, duration: dur, ease: ease, stagger: { each: st, from: rev ? 'end' : 'start' } }); };\n"
+  "    ST.create({ trigger: el, start: txtStart(), onEnter: function () { go(false); }, onEnterBack: function () { go(true); }, onLeaveBack: function () { G.killTweensOf(items); G.set(items, { yPercent: off }); } });\n"
+  "  }\n  function splitLines(el, opts) {"),
+ ("G.from(s.lines, Object.assign({ yPercent: 110, duration: 0.9, ease: 'power3.out', stagger: 0.04 }, opts && opts.delay != null ? { delay: opts.delay } : { scrollTrigger: { trigger: el, start: txtStart(), once: true } }));",
+  "if (opts && opts.delay != null) G.from(s.lines, { yPercent: 110, duration: 0.9, ease: 'power3.out', stagger: 0.04, delay: opts.delay }); else bidir(el, s.lines, 110, 0.9, 'power3.out', 0.04);"),
+ ("G.from(s.words, { yPercent: 105, duration: 0.75, ease: 'power2.out', stagger: 0.018, scrollTrigger: { trigger: el, start: txtStart(), once: true } });",
+  "bidir(el, s.words, 105, 0.75, 'power2.out', 0.018);"),
+ ("      var o = { v: 0 };\n      G.from(el, { y: 40, opacity: 0, duration: 0.75, ease: 'power3.out', delay: i * 0.12, scrollTrigger: { trigger: group, start: txtStart(), once: true } });\n      G.to(o, { v: end, duration: 1.6, ease: 'expo.out', delay: i * 0.12, onUpdate: function () { c.textContent = numVal(o.v, dec); }, scrollTrigger: { trigger: group, start: txtStart(), once: true } });",
+  "      G.set(el, { y: 40, opacity: 0 }); c.textContent = numVal(0, dec);\n"
+  "      var play = function (rev) { if (el._o) G.killTweensOf(el._o); G.killTweensOf(el); var o = el._o = { v: rev ? end * 1.5 : 0 }; G.fromTo(el, { y: rev ? -40 : 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.75, ease: 'power3.out', delay: i * 0.12 }); G.to(o, { v: end, duration: 1.6, ease: 'expo.out', delay: i * 0.12, onUpdate: function () { c.textContent = numVal(o.v, dec); } }); };\n"
+  "      ST.create({ trigger: group, start: txtStart(), onEnter: function () { play(false); }, onEnterBack: function () { play(true); }, onLeaveBack: function () { if (el._o) G.killTweensOf(el._o); G.killTweensOf(el); G.set(el, { y: 40, opacity: 0 }); c.textContent = numVal(0, dec); } });"),
+]
 def main():
     n = 0
     for f in sorted(glob.glob(str(PUB / '**/*.html'), recursive=True)):
         s = Path(f).read_text(encoding='utf-8')
-        if 'wfxPlay' not in s or 'WFX_V2' in s: continue
-        steps = ([] if MARK in s else SUBS) + UPGRADE
+        if 'wfxPlay' not in s or 'WFX_V3' in s: continue
+        steps = ([] if MARK in s else SUBS) + ([] if 'WFX_V2' in s else UPGRADE) + UPGRADE3
         for a, b in steps:
             if s.count(a) != 1:
                 sys.exit('Nie znaleziono dokładnie jednego miejsca w %s dla:\n%s' % (f, a[:90]))
