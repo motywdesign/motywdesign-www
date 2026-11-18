@@ -112,12 +112,33 @@ UPGRADE7 = [
  ("function add() { build(); d.body.appendChild(r); }\n  if (d.body) add(); else addEventListener('DOMContentLoaded', add);",
   "function add() { build(); d.body.appendChild(r); }\n  setInterval(function () { if (!d.body) return; if (forced || d.querySelector('.gpk')) { if (!r.parentNode) add(); } else if (r.parentNode) r.parentNode.removeChild(r); }, 700);"),
 ]
+
+# v8: podziałka pokazuje też pionowe paski stref na pierwszym ekranie (ruch kursora między strefami zmienia zdjęcie)
+ZONES_JS = r"""  var z = d.createElement('div'); z.setAttribute('aria-hidden', 'true'); z.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:2147482998;font:600 11px/1.2 ui-monospace,Menlo,monospace';
+  setInterval(function () {
+    if (!r.parentNode) { if (z.parentNode) z.parentNode.removeChild(z); return; }
+    var zs = d.querySelectorAll('.hero .trig i'), s = '', last = null;
+    zs.forEach(function (el, i) {
+      var b = el.getBoundingClientRect(); if (!b.width || b.bottom < 0 || b.top > innerHeight) return;
+      var t = Math.max(0, b.top), h = Math.min(innerHeight, b.bottom) - t; last = b;
+      s += '<div style="position:absolute;left:' + b.left + 'px;top:' + t + 'px;width:' + b.width + 'px;height:' + h + 'px;box-sizing:border-box;background:' + (i % 2 ? 'rgba(255,59,48,.10)' : 'rgba(10,132,255,.10)') + ';border-left:2px dashed #fff"></div>';
+      s += '<div style="position:absolute;left:' + (b.left + 8) + 'px;top:' + (t + 48) + 'px;background:#000;color:#fff;padding:3px 7px;border-radius:4px;white-space:nowrap">strefa ' + (i + 1) + ': zdjęcie ' + (i + 1) + '</div>';
+    });
+    if (last) s += '<div style="position:absolute;left:' + (last.right - 2) + 'px;top:' + Math.max(0, last.top) + 'px;height:' + (Math.min(innerHeight, last.bottom) - Math.max(0, last.top)) + 'px;border-left:2px dashed #fff"></div>';
+    if (z.innerHTML !== s) z.innerHTML = s;
+    if (!z.parentNode) d.body.appendChild(z);
+  }, 120);
+"""
+UPGRADE8 = [
+ ("/*WFX_V7*/", "/*WFX_V7*/ /*WFX_V8*/"),
+ ("  addEventListener('resize', build);\n} catch (e) {} })();", "  addEventListener('resize', build);\n" + ZONES_JS + "} catch (e) {} })();"),
+]
 def main():
     n = 0
     for f in sorted(glob.glob(str(PUB / '**/*.html'), recursive=True)):
         s = Path(f).read_text(encoding='utf-8')
-        if 'wfxPlay' not in s or 'WFX_V7' in s: continue
-        steps = ([] if MARK in s else SUBS) + ([] if 'WFX_V2' in s else UPGRADE) + ([] if 'WFX_V3' in s else UPGRADE3) + ([] if 'WFX_V4' in s else UPGRADE4) + ([] if 'WFX_V5' in s else UPGRADE5) + ([] if 'WFX_V6' in s else UPGRADE6) + UPGRADE7
+        if 'wfxPlay' not in s or 'WFX_V8' in s: continue
+        steps = ([] if MARK in s else SUBS) + ([] if 'WFX_V2' in s else UPGRADE) + ([] if 'WFX_V3' in s else UPGRADE3) + ([] if 'WFX_V4' in s else UPGRADE4) + ([] if 'WFX_V5' in s else UPGRADE5) + ([] if 'WFX_V6' in s else UPGRADE6) + ([] if 'WFX_V7' in s else UPGRADE7) + UPGRADE8
         for a, b in steps:
             if s.count(a) != 1:
                 sys.exit('Nie znaleziono dokładnie jednego miejsca w %s dla:\n%s' % (f, a[:90]))
