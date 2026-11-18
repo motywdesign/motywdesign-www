@@ -244,7 +244,7 @@
   function imgCard(p, im, i, n) {
     var pics = !im.video, bigN = (function () { var o = bigOrder(p.images); return o.indexOf(i); })(), pairN = pairOrder(p.images).indexOf(i);
     var isHero = heroIdx(p) === i, lay = im.big ? 'big' : im.pair ? 'pair' : 'std';
-    return '<div class="thumb" data-i="' + i + '"><div class="im">' + (im.video ? '<video src="' + MD.imgUrl(im.id, true) + '#t=0.1" muted playsinline preload="metadata"></video>' : '<img loading="lazy" src="' + MD.imgUrl(im.th || im.id) + '" alt="' + esc(im.caption || '') + '">') +
+    return '<div class="thumb" data-i="' + i + '"><div class="im" draggable="true" title="Przeciągnij, żeby zmienić kolejność">' + (im.video ? '<video src="' + MD.imgUrl(im.id, true) + '#t=0.1" muted playsinline preload="metadata"></video>' : '<img loading="lazy" src="' + MD.imgUrl(im.th || im.id) + '" alt="' + esc(im.caption || '') + '">') +
       '<div class="bd">' + (i === 0 ? '<span class="pill">Okładka</span>' : '') + (im.video ? '<span class="pill vd">Wideo</span>' : '') + '</div></div>' +
       '<div class="ft"><input type="text" data-cap="' + i + '" value="' + esc(im.caption || '') + '" placeholder="Podpis zdjęcia" aria-label="Podpis zdjęcia ' + (i + 1) + '">' +
       (im.video ? '<select data-vmode="' + i + '" aria-label="Sposób odtwarzania"><option value="auto"' + (im.mode !== 'play' ? ' selected' : '') + '>Autoplay, pętla, bez dźwięku</option><option value="play"' + (im.mode === 'play' ? ' selected' : '') + '>Z przyciskiem play</option></select>' : '') +
@@ -344,6 +344,17 @@
   MD.acts['pe-menu'] = function (b) {
     MD.menu(b, '<button data-act="pm-dup" data-id="' + esc(MD.cur.pid) + '">Duplikuj</button><button class="dg" data-act="pm-del" data-id="' + esc(MD.cur.pid) + '">Przenieś do kosza</button>', true);
   };
+  /* przeciąganie zdjęć projektu (myszką); na dotyku zostają strzałki */
+  var imDrag = null;
+  function imClear() { MD.$$('.thumb.drag,.thumb.over').forEach(function (x) { x.classList.remove('drag', 'over'); }); }
+  document.addEventListener('dragstart', function (e) { var t = e.target.closest && e.target.closest('.thumb[data-i]'); if (!t || !cur()) return; imDrag = +t.getAttribute('data-i'); t.classList.add('drag'); try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', 'zdjecie-' + imDrag); } catch (x) {} });
+  document.addEventListener('dragover', function (e) { if (imDrag === null) return; var t = e.target.closest && e.target.closest('.thumb[data-i]'); if (!t) return; e.preventDefault(); imClear(); var d = MD.$('.thumb[data-i="' + imDrag + '"]'); if (d) d.classList.add('drag'); if (+t.getAttribute('data-i') !== imDrag) t.classList.add('over'); });
+  document.addEventListener('drop', function (e) {
+    if (imDrag === null) return; var t = e.target.closest && e.target.closest('.thumb[data-i]'), p = cur(); if (!t || !p) return; e.preventDefault();
+    var to = +t.getAttribute('data-i'), from = imDrag; imDrag = null; imClear();
+    if (to !== from && from >= 0 && from < p.images.length && to >= 0 && to < p.images.length) { p.images.splice(to, 0, p.images.splice(from, 1)[0]); touchP(); }
+  });
+  document.addEventListener('dragend', function () { imDrag = null; imClear(); });
   MD.acts['im-mv'] = function (b) { var p = cur(), i = +b.dataset.i, j = i + (+b.dataset.d); if (j < 0 || j >= p.images.length) return; p.images.splice(j, 0, p.images.splice(i, 1)[0]); touchP(); };
   MD.acts['im-cover'] = function (b) { var p = cur(), i = +b.dataset.i; p.images.unshift(p.images.splice(i, 1)[0]); touchP(); };
   MD.acts['im-del'] = function (b) {
