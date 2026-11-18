@@ -60,7 +60,7 @@
   function uslugi() {
     return head('Usługi', 'Te same nazwy pokazują się na stronie głównej w „W czym możemy pomóc”.') +
       cols(card('Strona Usługi', null, '<div class="grid2">' + ui.field('Duże zdanie na górze', 's', 'servicesPage.lead', { ta: true, rows: 5, span: true }) + '</div>', '', 'narrow'),
-        card('Lista usług', 'W polu „Zakres” oddzielaj pozycje przecinkami.', ui.list('s', 'servicesList', [['name', 'Nazwa'], ['project', 'Zdjęcie', { pick: true }], ['text', 'Opis', { ta: true, span: true, rows: 2 }], ['get', 'Zakres', { ta: true, span: true, rows: 2 }]], { add: 'Dodaj usługę', empty: 'Brak usług.', cls: 'c2' }), '', 'wide')) + '</div>';
+        card('Lista usług', 'W polu „Zakres” oddzielaj pozycje przecinkami.', ui.list('s', 'servicesList', [['name', 'Nazwa'], ['project', 'Zdjęcie', { pick: true }], ['text', 'Opis', { ta: true, span: true, rows: 2 }], ['get', 'Zakres', { ta: true, span: true, rows: 2 }], ['hidden', 'Ukryj na stronie (zostaje w panelu)', { sw: true }]], { add: 'Dodaj usługę', empty: 'Brak usług.', cls: 'c2' }), '', 'wide')) + '</div>';
   }
 
   /* ---------- Studio ---------- */

@@ -64,6 +64,7 @@
       return '<div class="item"><div class="grid2">' + fields.map(function (f) {
         var p = path + '.' + i + '.' + f[0], op = f[2] || {};
         if (op.show && !op.show(it)) return '';
+        if (op.sw) return '<div class="fld span2">' + ui.sw(f[1], scope, p, !!MD.get(scope, p)) + '</div>';
         if (op.pick) return ui.pick(f[1], scope, p, Object.assign({ span: op.span }, op.pick === true ? {} : op.pick));
         if (op.select) return ui.select(f[1], scope, p, op.select, { span: op.span });
         return ui.field(f[1], scope, p, op);
