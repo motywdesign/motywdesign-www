@@ -4777,37 +4777,20 @@ body.is-panel .foot { display: none; }
   document.addEventListener('mouseover', function (e) { if (!TE.on) return; var o = document.querySelector('.te-hov'); if (o) o.classList.remove('te-hov'); var el = tePick(e.target); if (el) el.classList.add('te-hov'); });
 })();
 </script>
-<script>/*WFX_V6*/ /*WFX_V7*/ /*WFX_V8*/(function () { try {
+<script>/*WFX_V6*/ /*WFX_V7*/ /*WFX_V8*/ /*WFX_V9*/(function () { try {
   var q = location.search, off = /[?&]granice=0\b/.test(q), forced = /[?&]granice\b/.test(q) && !off; if (off) return;
-  var d = document, r = d.createElement('div'); r.setAttribute('aria-hidden', 'true');
-  r.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:2147482999;font:600 11px/1.2 ui-monospace,Menlo,monospace';
-  function build() {
-    var h = innerHeight, desk = matchMedia('(min-width: 1024px) and (hover: hover) and (pointer: fine)').matches, y = Math.round(h * (desk ? 0.67 : 0.85)), s = '';
-    s += '<div style="position:absolute;left:0;top:0;bottom:0;width:34px;background:rgba(0,0,0,.55);border-right:1px solid rgba(255,255,255,.5)"></div>';
-    for (var p = 0; p <= 100; p += 5) { var t = Math.round(h * p / 100), big = p % 10 === 0; s += '<div style="position:absolute;left:' + (big ? 10 : 20) + 'px;width:' + (big ? 24 : 14) + 'px;top:' + t + 'px;height:1px;background:#fff"></div>'; if (big && p > 0 && p < 100) s += '<div style="position:absolute;left:38px;top:' + (t - 6) + 'px;color:#fff;text-shadow:0 0 3px #000,0 0 3px #000">' + p + '%</div>'; }
-    s += '<div style="position:absolute;left:0;right:0;top:' + y + 'px;border-top:2px dashed #ff3b30"></div>';
-    s += '<div style="position:absolute;left:80px;top:' + (y - 28) + 'px;background:#ff3b30;color:#fff;padding:3px 7px;border-radius:4px">w dół: tu animacja wchodzi (start)</div>';
-    s += '<div style="position:absolute;left:80px;top:' + (y + 6) + 'px;background:#0a84ff;color:#fff;padding:3px 7px;border-radius:4px">w górę: tu animacja się cofa</div>';
-    s += '<div style="position:absolute;left:0;right:0;top:0;border-top:2px dashed #0a84ff"></div>';
-    s += '<div style="position:absolute;right:8px;top:8px;background:#000;color:#fff;padding:4px 8px;border-radius:4px;opacity:.85">TEST: granice animacji (usuń ?granice z adresu, żeby wyłączyć)</div>';
-    r.innerHTML = s;
-  }
-  function add() { build(); d.body.appendChild(r); }
-  setInterval(function () { if (!d.body) return; if (forced || d.querySelector('.gpk')) { if (!r.parentNode) add(); } else if (r.parentNode) r.parentNode.removeChild(r); }, 700);
-  addEventListener('resize', build);
-  var z = d.createElement('div'); z.setAttribute('aria-hidden', 'true'); z.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:2147482998;font:600 11px/1.2 ui-monospace,Menlo,monospace';
+  var d = document, z = d.createElement('div'); z.setAttribute('aria-hidden', 'true'); z.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:2147482998';
   setInterval(function () {
-    if (!r.parentNode) { if (z.parentNode) z.parentNode.removeChild(z); return; }
-    var zs = d.querySelectorAll('.hero .trig i'), s = '', last = null;
-    zs.forEach(function (el, i) {
+    if (!d.body) return;
+    var zs = forced || d.querySelector('.gpk') ? d.querySelectorAll('.hero .trig i') : [], s = '', last = null;
+    zs.forEach(function (el) {
       var b = el.getBoundingClientRect(); if (!b.width || b.bottom < 0 || b.top > innerHeight) return;
       var t = Math.max(0, b.top), h = Math.min(innerHeight, b.bottom) - t; last = b;
-      s += '<div style="position:absolute;left:' + b.left + 'px;top:' + t + 'px;width:' + b.width + 'px;height:' + h + 'px;box-sizing:border-box;background:' + (i % 2 ? 'rgba(255,59,48,.10)' : 'rgba(10,132,255,.10)') + ';border-left:2px dashed #fff"></div>';
-      s += '<div style="position:absolute;left:' + (b.left + 8) + 'px;top:' + (t + 48) + 'px;background:#000;color:#fff;padding:3px 7px;border-radius:4px;white-space:nowrap">strefa ' + (i + 1) + ': zdjęcie ' + (i + 1) + '</div>';
+      s += '<div style="position:absolute;left:' + Math.round(b.left) + 'px;top:' + t + 'px;height:' + h + 'px;border-left:2px dashed #000"></div>';
     });
-    if (last) s += '<div style="position:absolute;left:' + (last.right - 2) + 'px;top:' + Math.max(0, last.top) + 'px;height:' + (Math.min(innerHeight, last.bottom) - Math.max(0, last.top)) + 'px;border-left:2px dashed #fff"></div>';
+    if (last) s += '<div style="position:absolute;left:' + (Math.round(last.right) - 2) + 'px;top:' + Math.max(0, last.top) + 'px;height:' + (Math.min(innerHeight, last.bottom) - Math.max(0, last.top)) + 'px;border-left:2px dashed #000"></div>';
     if (z.innerHTML !== s) z.innerHTML = s;
-    if (!z.parentNode) d.body.appendChild(z);
+    if (s) { if (!z.parentNode) d.body.appendChild(z); } else if (z.parentNode) z.parentNode.removeChild(z);
   }, 120);
 } catch (e) {} })();</script>
 </body></html>

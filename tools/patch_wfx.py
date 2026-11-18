@@ -133,16 +133,40 @@ UPGRADE8 = [
  ("/*WFX_V7*/", "/*WFX_V7*/ /*WFX_V8*/"),
  ("  addEventListener('resize', build);\n} catch (e) {} })();", "  addEventListener('resize', build);\n" + ZONES_JS + "} catch (e) {} })();"),
 ]
+
+# v9: z podziałki zostają tylko czarne przerywane pionowe linie stref pierwszego ekranu (widoczne dla właściciela; ?granice=0 wyłącza, ?granice wymusza)
+import re
+LINES_JS = r"""<script>/*WFX_V6*/ /*WFX_V7*/ /*WFX_V8*/ /*WFX_V9*/(function () { try {
+  var q = location.search, off = /[?&]granice=0\b/.test(q), forced = /[?&]granice\b/.test(q) && !off; if (off) return;
+  var d = document, z = d.createElement('div'); z.setAttribute('aria-hidden', 'true'); z.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:2147482998';
+  setInterval(function () {
+    if (!d.body) return;
+    var zs = forced || d.querySelector('.gpk') ? d.querySelectorAll('.hero .trig i') : [], s = '', last = null;
+    zs.forEach(function (el) {
+      var b = el.getBoundingClientRect(); if (!b.width || b.bottom < 0 || b.top > innerHeight) return;
+      var t = Math.max(0, b.top), h = Math.min(innerHeight, b.bottom) - t; last = b;
+      s += '<div style="position:absolute;left:' + Math.round(b.left) + 'px;top:' + t + 'px;height:' + h + 'px;border-left:2px dashed #000"></div>';
+    });
+    if (last) s += '<div style="position:absolute;left:' + (Math.round(last.right) - 2) + 'px;top:' + Math.max(0, last.top) + 'px;height:' + (Math.min(innerHeight, last.bottom) - Math.max(0, last.top)) + 'px;border-left:2px dashed #000"></div>';
+    if (z.innerHTML !== s) z.innerHTML = s;
+    if (s) { if (!z.parentNode) d.body.appendChild(z); } else if (z.parentNode) z.parentNode.removeChild(z);
+  }, 120);
+} catch (e) {} })();</script>
+</body>"""
+def upgrade9(s):
+    return re.sub(r'<script>/\*WFX_V6\*/.*?</script>\n</body>', lambda m: LINES_JS, s, count=1, flags=re.S)
 def main():
     n = 0
     for f in sorted(glob.glob(str(PUB / '**/*.html'), recursive=True)):
         s = Path(f).read_text(encoding='utf-8')
-        if 'wfxPlay' not in s or 'WFX_V8' in s: continue
-        steps = ([] if MARK in s else SUBS) + ([] if 'WFX_V2' in s else UPGRADE) + ([] if 'WFX_V3' in s else UPGRADE3) + ([] if 'WFX_V4' in s else UPGRADE4) + ([] if 'WFX_V5' in s else UPGRADE5) + ([] if 'WFX_V6' in s else UPGRADE6) + ([] if 'WFX_V7' in s else UPGRADE7) + UPGRADE8
+        if 'wfxPlay' not in s or 'WFX_V9' in s: continue
+        steps = ([] if MARK in s else SUBS) + ([] if 'WFX_V2' in s else UPGRADE) + ([] if 'WFX_V3' in s else UPGRADE3) + ([] if 'WFX_V4' in s else UPGRADE4) + ([] if 'WFX_V5' in s else UPGRADE5) + ([] if 'WFX_V6' in s else UPGRADE6) + ([] if 'WFX_V7' in s else UPGRADE7) + ([] if 'WFX_V8' in s else UPGRADE8)
         for a, b in steps:
             if s.count(a) != 1:
                 sys.exit('Nie znaleziono dokładnie jednego miejsca w %s dla:\n%s' % (f, a[:90]))
             s = s.replace(a, b)
+        s = upgrade9(s)
+        if 'WFX_V9' not in s: sys.exit('v9 nie zadziałało w ' + f)
         Path(f).write_text(s, encoding='utf-8'); n += 1
     print('Podmieniono efekty w %d plikach.' % n)
 main()
