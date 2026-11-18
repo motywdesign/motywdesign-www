@@ -4777,8 +4777,8 @@ body.is-panel .foot { display: none; }
   document.addEventListener('mouseover', function (e) { if (!TE.on) return; var o = document.querySelector('.te-hov'); if (o) o.classList.remove('te-hov'); var el = tePick(e.target); if (el) el.classList.add('te-hov'); });
 })();
 </script>
-<script>/*WFX_V6*/(function () { try {
-  if (!/[?&]granice\b/.test(location.search)) return;
+<script>/*WFX_V6*/ /*WFX_V7*/(function () { try {
+  var q = location.search, off = /[?&]granice=0\b/.test(q), forced = /[?&]granice\b/.test(q) && !off; if (off) return;
   var d = document, r = d.createElement('div'); r.setAttribute('aria-hidden', 'true');
   r.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:2147482999;font:600 11px/1.2 ui-monospace,Menlo,monospace';
   function build() {
@@ -4793,7 +4793,7 @@ body.is-panel .foot { display: none; }
     r.innerHTML = s;
   }
   function add() { build(); d.body.appendChild(r); }
-  if (d.body) add(); else addEventListener('DOMContentLoaded', add);
+  setInterval(function () { if (!d.body) return; if (forced || d.querySelector('.gpk')) { if (!r.parentNode) add(); } else if (r.parentNode) r.parentNode.removeChild(r); }, 700);
   addEventListener('resize', build);
 } catch (e) {} })();</script>
 </body></html>

@@ -103,12 +103,21 @@ DBG_JS = r'''(function () { try {
 UPGRADE6 = [
  ("</body>", "<script>/*WFX_V6*/" + DBG_JS + "</script>\n</body>"),
 ]
+
+# v7: podziałka granic animacji widoczna od razu dla właściciela (gdy jest pasek właściciela), bez dopisku; ?granice=0 ją wyłącza, ?granice wymusza dla każdego
+UPGRADE7 = [
+ ("/*WFX_V6*/", "/*WFX_V6*/ /*WFX_V7*/"),
+ ("if (!/[?&]granice\\b/.test(location.search)) return;",
+  "var q = location.search, off = /[?&]granice=0\\b/.test(q), forced = /[?&]granice\\b/.test(q) && !off; if (off) return;"),
+ ("function add() { build(); d.body.appendChild(r); }\n  if (d.body) add(); else addEventListener('DOMContentLoaded', add);",
+  "function add() { build(); d.body.appendChild(r); }\n  setInterval(function () { if (!d.body) return; if (forced || d.querySelector('.gpk')) { if (!r.parentNode) add(); } else if (r.parentNode) r.parentNode.removeChild(r); }, 700);"),
+]
 def main():
     n = 0
     for f in sorted(glob.glob(str(PUB / '**/*.html'), recursive=True)):
         s = Path(f).read_text(encoding='utf-8')
-        if 'wfxPlay' not in s or 'WFX_V6' in s: continue
-        steps = ([] if MARK in s else SUBS) + ([] if 'WFX_V2' in s else UPGRADE) + ([] if 'WFX_V3' in s else UPGRADE3) + ([] if 'WFX_V4' in s else UPGRADE4) + ([] if 'WFX_V5' in s else UPGRADE5) + UPGRADE6
+        if 'wfxPlay' not in s or 'WFX_V7' in s: continue
+        steps = ([] if MARK in s else SUBS) + ([] if 'WFX_V2' in s else UPGRADE) + ([] if 'WFX_V3' in s else UPGRADE3) + ([] if 'WFX_V4' in s else UPGRADE4) + ([] if 'WFX_V5' in s else UPGRADE5) + ([] if 'WFX_V6' in s else UPGRADE6) + UPGRADE7
         for a, b in steps:
             if s.count(a) != 1:
                 sys.exit('Nie znaleziono dokładnie jednego miejsca w %s dla:\n%s' % (f, a[:90]))
