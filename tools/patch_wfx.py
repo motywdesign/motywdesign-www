@@ -64,12 +64,21 @@ UPGRADE3 = [
   "      var play = function (rev) { if (el._o) G.killTweensOf(el._o); G.killTweensOf(el); var o = el._o = { v: rev ? end * 1.5 : 0 }; G.fromTo(el, { y: rev ? -40 : 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.75, ease: 'power3.out', delay: i * 0.12 }); G.to(o, { v: end, duration: 1.6, ease: 'expo.out', delay: i * 0.12, onUpdate: function () { c.textContent = numVal(o.v, dec); } }); };\n"
   "      ST.create({ trigger: group, start: txtStart(), onEnter: function () { play(false); }, onEnterBack: function () { play(true); }, onLeaveBack: function () { if (el._o) G.killTweensOf(el._o); G.killTweensOf(el); G.set(el, { y: 40, opacity: 0 }); c.textContent = numVal(0, dec); } });"),
 ]
+
+# v4: przy cofaniu scrolla animacja cofa się płynnie (tekst zjeżdża, cyfry liczą w dół), zamiast znikać skokiem; ponowne wejście od góry niczego nie chowa
+UPGRADE4 = [
+ ("/*WFX_V3*/", "/*WFX_V3*/ /*WFX_V4*/"),
+ ("onEnter: function () { go(false); }, onEnterBack: function () { go(true); }, onLeaveBack: function () { G.killTweensOf(items); G.set(items, { yPercent: off }); } });",
+  "onEnter: function () { go(false); }, onLeaveBack: function () { G.killTweensOf(items); G.to(items, { yPercent: off, duration: dur * 0.7, ease: 'power2.in', stagger: { each: st, from: 'end' } }); } });"),
+ ("onEnter: function () { play(false); }, onEnterBack: function () { play(true); }, onLeaveBack: function () { if (el._o) G.killTweensOf(el._o); G.killTweensOf(el); G.set(el, { y: 40, opacity: 0 }); c.textContent = numVal(0, dec); } });",
+  "onEnter: function () { play(false); }, onLeaveBack: function () { var o = el._o || (el._o = { v: end }); G.killTweensOf(o); G.killTweensOf(el); G.to(el, { y: 40, opacity: 0, duration: 0.6, ease: 'power2.in' }); G.to(o, { v: 0, duration: 0.9, ease: 'power2.in', onUpdate: function () { c.textContent = numVal(o.v, dec); } }); } });"),
+]
 def main():
     n = 0
     for f in sorted(glob.glob(str(PUB / '**/*.html'), recursive=True)):
         s = Path(f).read_text(encoding='utf-8')
-        if 'wfxPlay' not in s or 'WFX_V3' in s: continue
-        steps = ([] if MARK in s else SUBS) + ([] if 'WFX_V2' in s else UPGRADE) + UPGRADE3
+        if 'wfxPlay' not in s or 'WFX_V4' in s: continue
+        steps = ([] if MARK in s else SUBS) + ([] if 'WFX_V2' in s else UPGRADE) + ([] if 'WFX_V3' in s else UPGRADE3) + UPGRADE4
         for a, b in steps:
             if s.count(a) != 1:
                 sys.exit('Nie znaleziono dokładnie jednego miejsca w %s dla:\n%s' % (f, a[:90]))

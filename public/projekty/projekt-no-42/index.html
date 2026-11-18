@@ -2018,7 +2018,7 @@ body.is-panel .foot { display: none; }
     if (!booted) return;
     var y = window.scrollY; quiet = true; QY = y; render(r); quiet = false; window.scrollTo(0, y);
   }
-  var quiet = false, booted = false, QY = 0; /*WFX_V3*/
+  var quiet = false, booted = false, QY = 0; /*WFX_V3*/ /*WFX_V4*/
   function boot() { if (booted) return; booted = true; go(true); applyModules(); }
 
 
@@ -3929,7 +3929,7 @@ body.is-panel .foot { display: none; }
       if (instant || !motion) { c.textContent = numVal(end, dec); return; }
       G.set(el, { y: 40, opacity: 0 }); c.textContent = numVal(0, dec);
       var play = function (rev) { if (el._o) G.killTweensOf(el._o); G.killTweensOf(el); var o = el._o = { v: rev ? end * 1.5 : 0 }; G.fromTo(el, { y: rev ? -40 : 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.75, ease: 'power3.out', delay: i * 0.12 }); G.to(o, { v: end, duration: 1.6, ease: 'expo.out', delay: i * 0.12, onUpdate: function () { c.textContent = numVal(o.v, dec); } }); };
-      ST.create({ trigger: group, start: txtStart(), onEnter: function () { play(false); }, onEnterBack: function () { play(true); }, onLeaveBack: function () { if (el._o) G.killTweensOf(el._o); G.killTweensOf(el); G.set(el, { y: 40, opacity: 0 }); c.textContent = numVal(0, dec); } });
+      ST.create({ trigger: group, start: txtStart(), onEnter: function () { play(false); }, onLeaveBack: function () { var o = el._o || (el._o = { v: end }); G.killTweensOf(o); G.killTweensOf(el); G.to(el, { y: 40, opacity: 0, duration: 0.6, ease: 'power2.in' }); G.to(o, { v: 0, duration: 0.9, ease: 'power2.in', onUpdate: function () { c.textContent = numVal(o.v, dec); } }); } });
     });
   }
   /* start animacji tekstu: na komputerze dopiero gdy tekst dojdzie do ok. 1/3 wysokości okna od dołu (clamp: teksty przy końcu strony i tak się odpalą), na telefonie jak dotąd, zaraz po wejściu */
@@ -3941,7 +3941,7 @@ body.is-panel .foot { display: none; }
   function bidir(el, items, off, dur, ease, st) {
     G.set(items, { yPercent: off });
     var go = function (rev) { G.killTweensOf(items); G.fromTo(items, { yPercent: rev ? -off : off }, { yPercent: 0, duration: dur, ease: ease, stagger: { each: st, from: rev ? 'end' : 'start' } }); };
-    ST.create({ trigger: el, start: txtStart(), onEnter: function () { go(false); }, onEnterBack: function () { go(true); }, onLeaveBack: function () { G.killTweensOf(items); G.set(items, { yPercent: off }); } });
+    ST.create({ trigger: el, start: txtStart(), onEnter: function () { go(false); }, onLeaveBack: function () { G.killTweensOf(items); G.to(items, { yPercent: off, duration: dur * 0.7, ease: 'power2.in', stagger: { each: st, from: 'end' } }); } });
   }
   function splitLines(el, opts) {
     if (!motion || !SPL) return null;
